@@ -318,4 +318,79 @@ namespace Olishell
 	    return WaitAsync(new ITCPrimitive[]{prim}, timeoutMs);
 	}
     }
+
+    // This wrapper is another utility which produces a synchronous Gtk
+    // event for a single ITC primitive. Its methods should be called
+    // only from the Gtk thread.
+    class ITCGtk
+    {
+	public class ITCEventArgs : EventArgs
+	{
+	    public readonly ITCPrimitive Primitive;
+
+	    public ITCEventArgs(ITCPrimitive p)
+	    {
+		Primitive = p;
+	    }
+	}
+
+	public delegate void ITCEventHandler(object sender,
+		ITCEventArgs args);
+
+	public event ITCEventHandler SignalledEvent;
+
+	bool enabled = false;
+	bool listening = false;
+	ITCPrimitive[] prim = new ITCPrimitive[1];
+
+	public ITCGtk(ITCPrimitive p)
+	{
+	    prim[0] = p;
+	}
+
+	// Enable the event. The SignalledEvent handler will be raised
+	// whenever the wrapper primitive is ready. This is a
+	// level-triggered event and will continue to fire as long as
+	// the primitive remains ready.
+	public void Enable()
+	{
+	    enabled = true;
+	    listen();
+	}
+
+	// Synchronously disable the event. After this call returns, no
+	// further events will be raised.
+	public void Disable()
+	{
+	    enabled = false;
+	}
+
+	// This method is invoked in the Gtk event loop when the
+	// primitive becomes signalled, and we have previously listened
+	// for it. The "listening" flag acts as a guard against multiple
+	// scheduling of this event.
+	void gtkHandler(object sender, EventArgs args)
+	{
+	    listening = false;
+
+	    try {
+		if (enabled)
+		    SignalledEvent(this, new ITCEventArgs(prim[0]));
+	    }
+	    finally
+	    {
+		listen();
+	    }
+	}
+
+	// Reschedule the Gtk handler to be run when the primitive
+	// becomes ready. This is only done if we need to do this and
+	// the handler hasn't already been scheduled.
+	void listen()
+	{
+	    if (enabled && !listening)
+		ITCPrimitive.WhenSignalled(prim, -1, (p) =>
+		    Gtk.Application.Invoke(gtkHandler));
+	}
+    }
 }
