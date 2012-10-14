@@ -123,8 +123,8 @@ namespace Olishell
 	// callback is the primitive which became ready, or null if the
 	// timeout expired.
 	public static void WhenSignalled(ITCPrimitive[] prims,
-					 int timeoutMs,
-					 Callback cb)
+					 Callback cb,
+					 int timeoutMs = -1)
 	{
 	    Listener l = new Listener();
 
@@ -140,6 +140,13 @@ namespace Olishell
 
 	    foreach (ITCPrimitive p in prims)
 		p.Listen(l);
+	}
+
+	public static void WhenSignalled(ITCPrimitive prim,
+					 Callback cb,
+					 int timeoutMs = -1)
+	{
+	    WhenSignalled(new ITCPrimitive[]{prim}, cb, timeoutMs);
 	}
     }
 
@@ -205,8 +212,7 @@ namespace Olishell
 	    lock (stateMutex)
 	    {
 		state++;
-		if (state > 0)
-		    fire = true;
+		fire = (state > 0);
 	    }
 
 	    if (fire)
@@ -225,6 +231,52 @@ namespace Olishell
 		}
 
 	    return ret;
+	}
+    }
+
+    // This primitive is the opposite of a semaphore. It can be used to
+    // keep an waitable count of outstanding operations. It contains two
+    // operations: Inc() and Dec(). The primitive becomes signalled
+    // when the count is 0.
+    class ITCCounter : ITCPrimitive
+    {
+	object stateMutex = new object();
+	int state = 0;
+
+	public ITCCounter() { }
+
+	public ITCCounter(int init)
+	{
+	    state = init;
+	}
+
+	public override bool Signalled
+	{
+	    get
+	    {
+		lock (stateMutex)
+		    return state == 0;
+	    }
+	}
+
+	public void Inc()
+	{
+	    lock (stateMutex)
+		state++;
+	}
+
+	public void Dec()
+	{
+	    bool fire = false;
+
+	    lock (stateMutex)
+	    {
+		state--;
+		fire = (state <= 0);
+	    }
+
+	    if (fire)
+		fireListeners();
 	}
     }
 
@@ -302,8 +354,8 @@ namespace Olishell
 	{
 	    var tsc = new TaskCompletionSource<ITCPrimitive>();
 
-	    ITCPrimitive.WhenSignalled(prims, timeoutMs,
-		(src) => tsc.SetResult(src));
+	    ITCPrimitive.WhenSignalled(prims,
+		(src) => tsc.SetResult(src), timeoutMs);
 
 	    return tsc.Task;
 	}
@@ -385,7 +437,7 @@ namespace Olishell
 	void listen()
 	{
 	    if (enabled && !listening)
-		ITCPrimitive.WhenSignalled(prim, -1, (p) =>
+		ITCPrimitive.WhenSignalled(prim, (p) =>
 		    Gtk.Application.Invoke(gtkHandler));
 	}
     }

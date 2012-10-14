@@ -77,7 +77,7 @@ namespace Olishell
 	// Clients don't speak directly to the debugger process. The
 	// intermediate debugger task uses these channels to communicate
 	// with the actual process.
-	ITCSemaphore streamCount = new ITCSemaphore(2);
+	ITCCounter streamCount = new ITCCounter(2);
 	ITCChannel<Message> rawOutput = new ITCChannel<Message>();
 	StreamWriter rawInput;
 
@@ -117,6 +117,7 @@ namespace Olishell
 	    p.BeginOutputReadLine();
 	    p.BeginErrorReadLine();
 
+	    ITCPrimitive.WhenSignalled(streamCount, (pr) => rawOutput.Close());
 	    ITCTask.WaitAsync(new ITCPrimitive[]{Cancel, rawOutput}).
 		ContinueWith(this.ManagerBusy);
 	}
@@ -128,15 +129,9 @@ namespace Olishell
 	    string data = args.Data;
 
 	    if (data == null)
-	    {
-		streamCount.TryLower();
-		if (!streamCount.Signalled)
-		    rawOutput.Close();
-	    }
+		streamCount.Dec();
 	    else
-	    {
 		rawOutput.Send(new Message(MessageType.Error, args.Data));
-	    }
 	}
 
 	// Shift data from stdout to the rawOutput channel for the
@@ -146,15 +141,9 @@ namespace Olishell
 	    string data = args.Data;
 
 	    if (data == null)
-	    {
-		streamCount.TryLower();
-		if (!streamCount.Signalled)
-		    rawOutput.Close();
-	    }
+		streamCount.Dec();
 	    else
-	    {
 		rawOutput.Send(OutputToMessage(data));
-	    }
 	}
 
 	// Convert an embedded mode message to a structured message
