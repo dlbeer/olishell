@@ -389,6 +389,27 @@ namespace Olishell
 	}
     }
 
+    // This wrapper is a utility for scheduling continuations in the
+    // thread pool.
+    class ITCCont
+    {
+	public static void Continue(ITCPrimitive[] prims,
+		ITCPrimitive.Callback cb, int timeoutMs = -1)
+	{
+	    ITCPrimitive.WhenSignalled(prims, (pr) =>
+		ThreadPool.QueueUserWorkItem((obj) => cb(pr)),
+		timeoutMs);
+	}
+
+	public static void Continue(ITCPrimitive prim,
+		ITCPrimitive.Callback cb, int timeoutMs = -1)
+	{
+	    ITCPrimitive.WhenSignalled(prim, (pr) =>
+		ThreadPool.QueueUserWorkItem((obj) => cb(pr)),
+		timeoutMs);
+	}
+    }
+
     // This wrapper is a utility to produce Tasks for waiting for
     // ITC primitives. It can either produce a blocking task, or
     // schedule an asynchronous continuation.

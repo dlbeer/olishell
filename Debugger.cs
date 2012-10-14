@@ -19,7 +19,6 @@
 using System;
 using System.IO;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Olishell
 {
@@ -118,8 +117,7 @@ namespace Olishell
 	    p.BeginErrorReadLine();
 
 	    ITCPrimitive.WhenSignalled(streamCount, (pr) => rawOutput.Close());
-	    ITCTask.WaitAsync(new ITCPrimitive[]{Cancel, rawOutput}).
-		ContinueWith(this.ManagerBusy);
+	    ManagerBusy(null);
 	}
 
 	// Shift data from stderr to the rawOutput channel, where it'll
@@ -169,7 +167,7 @@ namespace Olishell
 
 	// Manager: busy state. A command, or startup is in progress. We
 	// move to the ready state once the command is finished.
-	void ManagerBusy(Task task)
+	void ManagerBusy(ITCPrimitive source)
 	{
 	    Message msg;
 
@@ -198,18 +196,18 @@ namespace Olishell
 			(msg.Text.Equals("ready")))
 		{
 		    Ready.Raise();
-		    ManagerReady(task);
+		    ManagerReady(null);
 		    return;
 		}
 	    }
 
-	    ITCTask.WaitAsync(new ITCPrimitive[]{Cancel, rawOutput}).
-		ContinueWith(this.ManagerBusy);
+	    ITCCont.Continue(new ITCPrimitive[]{Cancel, rawOutput},
+		this.ManagerBusy);
 	}
 
 	// Manager: ready state. mspdebug is sitting idle and waiting
 	// for a command.
-	void ManagerReady(Task task)
+	void ManagerReady(ITCPrimitive source)
 	{
 	    string cmd;
 
@@ -221,7 +219,7 @@ namespace Olishell
 		}
 		catch (Exception) { }
 
-		ManagerExiting(task);
+		ManagerExiting(null);
 		return;
 	    }
 
@@ -233,7 +231,7 @@ namespace Olishell
 		}
 		catch (Exception) { }
 
-		ManagerSubmitting(task);
+		ManagerSubmitting(null);
 		return;
 	    }
 
@@ -244,8 +242,8 @@ namespace Olishell
 		Ready.Raise();
 	    }
 
-	    ITCTask.WaitAsync(new ITCPrimitive[]{Cancel, Commands}).
-		ContinueWith(this.ManagerReady);
+	    ITCCont.Continue(new ITCPrimitive[]{Cancel, Commands},
+		this.ManagerReady);
 	}
 
 	// Manager: submitting state. We've just been given a command
@@ -253,7 +251,7 @@ namespace Olishell
 	// acknowledgement of receipt before doing anything further,
 	// otherwise any cancellation requests we might want to send
 	// could get lost without effect.
-	void ManagerSubmitting(Task task)
+	void ManagerSubmitting(ITCPrimitive source)
 	{
 	    Message msg;
 
@@ -269,18 +267,17 @@ namespace Olishell
 		if ((msg.Type == MessageType.Shell) &&
 			(msg.Text.Equals("busy")))
 		{
-		    ManagerBusy(task);
+		    ManagerBusy(null);
 		    return;
 		}
 	    }
 
-	    ITCTask.WaitAsync(rawOutput).
-		ContinueWith(this.ManagerSubmitting);
+	    ITCCont.Continue(rawOutput, this.ManagerSubmitting);
 	}
 
 	// We've closed mspdebug's stdin and are now waiting for process
 	// exit.
-	void ManagerExiting(Task task)
+	void ManagerExiting(ITCPrimitive source)
 	{
 	    Message msg;
 
@@ -293,7 +290,7 @@ namespace Olishell
 	    if (rawOutput.TryReceive(out msg))
 		Output.Send(msg);
 
-	    ITCTask.WaitAsync(rawOutput).ContinueWith(this.ManagerExiting);
+	    ITCCont.Continue(rawOutput, this.ManagerExiting);
 	}
     }
 }
