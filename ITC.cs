@@ -372,31 +372,21 @@ namespace Olishell
     // only from the Gtk thread.
     class ITCGtk
     {
-	public class ITCEventArgs : EventArgs
-	{
-	    public readonly ITCPrimitive Primitive;
-
-	    public ITCEventArgs(ITCPrimitive p)
-	    {
-		Primitive = p;
-	    }
-	}
-
 	public delegate void ITCEventHandler(object sender,
-		ITCEventArgs args);
+		EventArgs args);
 
-	public event ITCEventHandler SignalledEvent;
+	public event ITCEventHandler Signalled;
+	public readonly ITCPrimitive Primitive;
 
 	bool enabled = false;
 	bool listening = false;
-	ITCPrimitive[] prim = new ITCPrimitive[1];
 
 	public ITCGtk(ITCPrimitive p)
 	{
-	    prim[0] = p;
+	    Primitive = p;
 	}
 
-	// Enable the event. The SignalledEvent handler will be raised
+	// Enable the event. The Signalled handler will be raised
 	// whenever the wrapper primitive is ready. This is a
 	// level-triggered event and will continue to fire as long as
 	// the primitive remains ready.
@@ -423,7 +413,7 @@ namespace Olishell
 
 	    try {
 		if (enabled)
-		    SignalledEvent(this, new ITCEventArgs(prim[0]));
+		    Signalled(this, new EventArgs());
 	    }
 	    finally
 	    {
@@ -437,7 +427,7 @@ namespace Olishell
 	void listen()
 	{
 	    if (enabled && !listening)
-		ITCPrimitive.WhenSignalled(prim, (p) =>
+		ITCPrimitive.WhenSignalled(Primitive, (p) =>
 		    Gtk.Application.Invoke(gtkHandler));
 	}
     }
