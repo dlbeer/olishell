@@ -345,8 +345,53 @@ namespace Olishell
 	}
     }
 
+    // This wrapper is a utility for waiting synchronously on ITC
+    // primitives.
+    class ITCSync
+    {
+	object mutex = new object();
+	ITCPrimitive result;
+	bool isReady = false;
+
+	ITCSync() { }
+
+	void Send(ITCPrimitive r)
+	{
+	    lock (mutex)
+	    {
+		isReady = true;
+		result = r;
+		Monitor.Pulse(mutex);
+	    }
+	}
+
+	ITCPrimitive Recv()
+	{
+	    lock (mutex)
+		while (!isReady)
+		    Monitor.Wait(mutex);
+
+	    return result;
+	}
+
+	public static ITCPrimitive Wait(ITCPrimitive[] prims,
+					int timeoutMs = -1)
+	{
+	    var s = new ITCSync();
+
+	    ITCPrimitive.WhenSignalled(prims, s.Send, timeoutMs);
+	    return s.Recv();
+	}
+
+	public static ITCPrimitive Wait(ITCPrimitive prim, int timeoutMs = -1)
+	{
+	    return Wait(new ITCPrimitive[]{prim}, timeoutMs);
+	}
+    }
+
     // This wrapper is a utility to produce Tasks for waiting for
-    // ITC primitives.
+    // ITC primitives. It can either produce a blocking task, or
+    // schedule an asynchronous continuation.
     class ITCTask
     {
 	public static Task<ITCPrimitive> WaitAsync(ITCPrimitive[] prims,

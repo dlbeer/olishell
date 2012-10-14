@@ -39,8 +39,9 @@ namespace Olishell
 	    db.Commands.Close();
 
 	    for (;;) {
-		ITCTask.WaitAsync(db.Output).Wait();
 		Debugger.Message msg;
+
+		ITCSync.Wait(db.Output);
 
 		if (!db.Output.TryReceive(out msg))
 		    break;
