@@ -17,8 +17,8 @@
 // USA
 
 using System;
-using System.Timers;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 // This file defines inter-thread communication primitives. These are
@@ -40,24 +40,32 @@ namespace Olishell
 	// be associated with multiple primitives.
 	class Listener
 	{
+	    int isFired;
 	    public Callback cont;
-	    bool isFired;
+	    volatile Timer timeout;
 
 	    public Listener()
 	    {
-		isFired = false;
+		isFired = 0;
 	    }
 
 	    public void Fire(ITCPrimitive source)
 	    {
-		lock (this)
+		if (Interlocked.Exchange(ref isFired, 1) == 0)
 		{
-		    if (isFired)
-			return;
-		    isFired = true;
+		    if (timeout != null)
+			timeout.Dispose();
+		    cont(source);
 		}
+	    }
 
-		cont(source);
+	    // Warning: the created timer will be referenced from the
+	    // Fire() handler. Do not call this method after the listener
+	    // has been attached to a primitive!
+	    public void SetTimeout(int periodMs)
+	    {
+		timeout = new Timer((obj) => Fire(null), null,
+				    periodMs, Timeout.Infinite);
 	    }
 	}
 
@@ -86,7 +94,7 @@ namespace Olishell
 	// Remove the given listener from the listening set. This
 	// function does not guarantee that the listener won't be
 	// called. It merely exists to free resources after a listener
-	// has been fired.
+	// has already been fired.
 	void Unlisten(Listener l)
 	{
 	    lock (listenMutex)
@@ -97,12 +105,13 @@ namespace Olishell
 	// signalled state becomes true. It fires all listeners.
 	protected void fireListeners()
 	{
+	    HashSet<Listener> newListeners = new HashSet<Listener>();
 	    HashSet<Listener> ls;
 
 	    lock (listenMutex)
 	    {
 		ls = listeners;
-		listeners = new HashSet<Listener>();
+		listeners = newListeners;
 	    }
 
 	    foreach (Listener l in ls)
@@ -118,10 +127,8 @@ namespace Olishell
 					 Callback cb)
 	{
 	    Listener l = new Listener();
-	    Timer tim = new Timer();
 
 	    l.cont = (src) => {
-		tim.Dispose();
 		foreach (ITCPrimitive p in prims)
 		    p.Unlisten(l);
 
@@ -129,10 +136,7 @@ namespace Olishell
 	    };
 
 	    if (timeoutMs > 0)
-	    {
-		tim.Elapsed += (s, a) => l.Fire(null);
-		tim.Enabled = true;
-	    }
+		l.SetTimeout(timeoutMs);
 
 	    foreach (ITCPrimitive p in prims)
 		p.Listen(l);
@@ -143,30 +147,22 @@ namespace Olishell
     // raised/cleared manually.
     class ITCEvent : ITCPrimitive
     {
-	object stateMutex = new object();
-	bool state = false;
+	volatile bool state = false;
 
 	public override bool Signalled
 	{
-	    get
-	    {
-		lock (stateMutex)
-		    return state;
-	    }
+	    get { return state; }
 	}
 
 	public void Raise()
 	{
-	    lock (stateMutex)
-		state = true;
-
+	    state = true;
 	    fireListeners();
 	}
 
 	public void Clear()
 	{
-	    lock (stateMutex)
-		state = false;
+	    state = false;
 	}
     }
 
