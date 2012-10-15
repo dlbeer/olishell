@@ -27,10 +27,12 @@ using System.Threading.Tasks;
 
 namespace Olishell.ITC
 {
-    // All  primitives have a "signalled" state, like Win32 kernel
+    // All primitives have a "signalled" state, like Win32 kernel
     // objects. The signalled state indicates that some sort of
     // consumption is possible (usually). You can wait for any of a set
     // of objects to become signalled, with an optional timeout.
+    //
+    // A primitive may have only a single consumer/waiter.
     abstract class Primitive
     {
 	public delegate void Callback(Primitive source);
@@ -42,7 +44,7 @@ namespace Olishell.ITC
 	{
 	    int isFired;
 	    public Callback cont;
-	    volatile Timer timeout;
+	    Timer timeout;
 
 	    public Listener()
 	    {
@@ -53,8 +55,11 @@ namespace Olishell.ITC
 	    {
 		if (Interlocked.Exchange(ref isFired, 1) == 0)
 		{
-		    if (timeout != null)
-			timeout.Dispose();
+		    Timer t = Interlocked.Exchange(ref timeout, null);
+
+		    if (t != null)
+			t.Dispose();
+
 		    cont(source);
 		}
 	    }
@@ -71,12 +76,11 @@ namespace Olishell.ITC
 
 	// Set of registered listeners. Listeners can be registered from
 	// any thread.
-	object listenMutex = new object();
-	HashSet<Listener> listeners = new HashSet<Listener>();
+	Listener listener = null;
 
 	// This property must be implemented in a derived class. The
 	// derived class should also call the protected property
-	// fireListeners() every time the signalled state becomes true.
+	// fireListener() every time the signalled state becomes true.
 	public abstract bool Signalled { get; }
 
 	// Add the given listener, to be fired whenever the primitive
@@ -84,37 +88,28 @@ namespace Olishell.ITC
 	// listener is fired immediately.
 	void Listen(Listener l)
 	{
-	    lock (listenMutex)
-		listeners.Add(l);
+	    listener = l;
 
 	    if (Signalled)
-		fireListeners();
+		fireListener();
 	}
 
 	// Remove the given listener from the listening set. This
 	// function does not guarantee that the listener won't be
 	// called. It merely exists to free resources after a listener
 	// has already been fired.
-	void Unlisten(Listener l)
+	void Unlisten()
 	{
-	    lock (listenMutex)
-		listeners.Remove(l);
+	    listener = null;
 	}
 
 	// This function is called in derived classes whenever the
 	// signalled state becomes true. It fires all listeners.
-	protected void fireListeners()
+	protected void fireListener()
 	{
-	    HashSet<Listener> newListeners = new HashSet<Listener>();
-	    HashSet<Listener> ls;
+	    Listener l = Interlocked.Exchange(ref listener, null);
 
-	    lock (listenMutex)
-	    {
-		ls = listeners;
-		listeners = newListeners;
-	    }
-
-	    foreach (Listener l in ls)
+	    if (l != null)
 		l.Fire(this);
 	}
 
@@ -130,7 +125,7 @@ namespace Olishell.ITC
 
 	    l.cont = (src) => {
 		foreach (Primitive p in prims)
-		    p.Unlisten(l);
+		    p.Unlisten();
 
 		cb(src);
 	    };
@@ -164,73 +159,12 @@ namespace Olishell.ITC
 	public void Raise()
 	{
 	    state = true;
-	    fireListeners();
+	    fireListener();
 	}
 
 	public void Clear()
 	{
 	    state = false;
-	}
-    }
-
-    // A semaphore has two operations: raise and lower, and
-    // holds an internal count (initially 0). The semaphore is signalled
-    // whenever its count is non-negative.
-    class Semaphore : Primitive
-    {
-	object stateMutex = new object();
-	int state = 0;
-
-	public Semaphore() { }
-	public Semaphore(int st)
-	{
-	    state = st;
-	}
-
-	public int State
-	{
-	    get
-	    {
-		lock (stateMutex)
-		    return state;
-	    }
-	}
-
-	public override bool Signalled
-	{
-	    get
-	    {
-		lock (stateMutex)
-		    return state > 0;
-	    }
-	}
-
-	public void Raise()
-	{
-	    bool fire = false;
-
-	    lock (stateMutex)
-	    {
-		state++;
-		fire = (state > 0);
-	    }
-
-	    if (fire)
-		fireListeners();
-	}
-
-	public bool TryLower()
-	{
-	    bool ret = false;
-
-	    lock (stateMutex)
-		if (state > 0)
-		{
-		    state--;
-		    ret = true;
-		}
-
-	    return ret;
 	}
     }
 
@@ -276,7 +210,7 @@ namespace Olishell.ITC
 	    }
 
 	    if (fire)
-		fireListeners();
+		fireListener();
 	}
     }
 
@@ -311,7 +245,7 @@ namespace Olishell.ITC
 		if (!closeRequested)
 		    queue.Enqueue(msg);
 
-	    fireListeners();
+	    fireListener();
 	}
 
 	public void Close()
@@ -319,7 +253,7 @@ namespace Olishell.ITC
 	    lock (stateMutex)
 		closeRequested = true;
 
-	    fireListeners();
+	    fireListener();
 	}
 
 	public bool IsClosed
@@ -375,7 +309,7 @@ namespace Olishell.ITC
 	}
 
 	public static Primitive Wait(Primitive[] prims,
-					int timeoutMs = -1)
+				     int timeoutMs = -1)
 	{
 	    var s = new Sync();
 
@@ -411,12 +345,12 @@ namespace Olishell.ITC
     }
 
     // This wrapper is a utility to produce Tasks for waiting for
-    //  primitives. It can either produce a blocking task, or
+    // primitives. It can either produce a blocking task, or
     // schedule an asynchronous continuation.
     class WaitTask
     {
 	public static Task<Primitive> WaitAsync(Primitive[] prims,
-						   int timeoutMs = -1)
+						int timeoutMs = -1)
 	{
 	    var tsc = new TaskCompletionSource<Primitive>();
 
@@ -427,7 +361,7 @@ namespace Olishell.ITC
 	}
 
 	public static Task<Primitive> WaitAsync(Primitive prim,
-						   int timeoutMs = -1)
+						int timeoutMs = -1)
 	{
 	    return WaitAsync(new Primitive[]{prim}, timeoutMs);
 	}
@@ -444,12 +378,13 @@ namespace Olishell.ITC
 	public event EventHandler Signalled;
 	public readonly Primitive Primitive;
 
-	bool enabled = false;
+	bool enabled = true;
 	bool listening = false;
 
 	public GtkListener(Primitive p)
 	{
 	    Primitive = p;
+	    listen();
 	}
 
 	// Enable the event. The Signalled handler will be raised
