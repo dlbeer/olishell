@@ -79,6 +79,7 @@ namespace Olishell
 	ITC.Counter streamCount = new ITC.Counter(2);
 	ITC.Channel<Message> rawOutput = new ITC.Channel<Message>();
 	StreamWriter rawInput;
+	Process proc;
 
 	// Start an mspdebug subprocess and three logical asynchronous
 	// processes:
@@ -105,19 +106,26 @@ namespace Olishell
 	    info.FileName = path;
 	    info.Arguments = args;
 
-	    var p = new Process();
+	    proc = new Process();
 
-	    p.StartInfo = info;
-	    p.OutputDataReceived += this.OnOutputData;
-	    p.ErrorDataReceived += this.OnErrorData;
+	    proc.StartInfo = info;
+	    proc.OutputDataReceived += this.OnOutputData;
+	    proc.ErrorDataReceived += this.OnErrorData;
 
-	    p.Start();
-	    rawInput = p.StandardInput;
-	    p.BeginOutputReadLine();
-	    p.BeginErrorReadLine();
+	    proc.Start();
+	    rawInput = proc.StandardInput;
+	    proc.BeginOutputReadLine();
+	    proc.BeginErrorReadLine();
 
-	    ITC.Primitive.WhenSignalled(streamCount, (pr) => rawOutput.Close());
+	    ITC.Pool.Continue(streamCount, CleanProcess);
 	    ManagerBusy(null);
+	}
+
+	// Clean up when the process exits.
+	void CleanProcess(ITC.Primitive prim)
+	{
+	    rawOutput.Close();
+	    proc.WaitForExit();
 	}
 
 	// Shift data from stderr to the rawOutput channel, where it'll
