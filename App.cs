@@ -23,32 +23,53 @@ namespace Olishell
 {
     class App
     {
+	public readonly Window MainWin = new Window("Olishell");
+	DebugView debugView;
+
+	public App()
+	{
+	    MainWin.Resize(700, 500);
+	    MainWin.DeleteEvent += (obj, evt) => Application.Quit();
+
+	    debugView = new DebugView();
+	    MainWin.Add(debugView.View);
+
+	    // FIXME: testing
+	    debugView.Debugger = new Debugger("mspdebug", "--embed sim");
+	}
+
+	// Do not call this function from the Gtk main loop!
+	void DebuggerSyncExit()
+	{
+	    Debugger dbg = debugView.Debugger;
+
+	    if (dbg != null)
+	    {
+		// Interrupt the debugger and signal end-of-input
+		dbg.Cancel.Raise();
+		dbg.Commands.Close();
+
+		// Wait for the output to drain
+		while (!dbg.Output.IsClosed)
+		{
+		    Debugger.Message msg;
+
+		    ITC.Sync.Wait(dbg.Output);
+		    while (dbg.Output.TryReceive(out msg));
+		}
+	    }
+	}
+
 	public static void Main()
 	{
 	    Application.Init();
 
-	    Window win = new Window("Test");
-	    win.Resize(640, 480);
-	    win.DeleteEvent += (obj, evt) => Application.Quit();
-
-	    var dv = new DebugView();
-	    var db = new Debugger("/usr/local/bin/mspdebug",
-		"--embed sim");
-
-	    dv.Debugger = db;
-
-	    win.Add(dv.View);
-	    win.ShowAll();
-
+	    var app = new App();
+	    app.MainWin.DeleteEvent += (obj, evt) => Application.Quit();
+	    app.MainWin.ShowAll();
 	    Application.Run();
 
-	    // Wait synchronously for debugger close
-	    Debugger.Message msg;
-
-	    db.Cancel.Raise();
-	    db.Commands.Close();
-	    while (db.Output.TryReceive(out msg))
-		ITC.Sync.Wait(db.Output);
+	    app.DebuggerSyncExit();
 	}
     }
 }
