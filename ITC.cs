@@ -25,15 +25,15 @@ using System.Threading.Tasks;
 // intended to make it much easier to structure asynchronous operations
 // using the communication sequential processes model.
 
-namespace Olishell
+namespace Olishell.ITC
 {
-    // All ITC primitives have a "signalled" state, like Win32 kernel
+    // All  primitives have a "signalled" state, like Win32 kernel
     // objects. The signalled state indicates that some sort of
     // consumption is possible (usually). You can wait for any of a set
     // of objects to become signalled, with an optional timeout.
-    abstract class ITCPrimitive
+    abstract class Primitive
     {
-	public delegate void Callback(ITCPrimitive source);
+	public delegate void Callback(Primitive source);
 
 	// A listener is a one-shot thread-safe callback. It can be
 	// fired multiple times, but will only ever execute once. It can
@@ -49,7 +49,7 @@ namespace Olishell
 		isFired = 0;
 	    }
 
-	    public void Fire(ITCPrimitive source)
+	    public void Fire(Primitive source)
 	    {
 		if (Interlocked.Exchange(ref isFired, 1) == 0)
 		{
@@ -122,14 +122,14 @@ namespace Olishell
 	// signalled, or when the timeout expires. The argument to the
 	// callback is the primitive which became ready, or null if the
 	// timeout expired.
-	public static void WhenSignalled(ITCPrimitive[] prims,
+	public static void WhenSignalled(Primitive[] prims,
 					 Callback cb,
 					 int timeoutMs = -1)
 	{
 	    Listener l = new Listener();
 
 	    l.cont = (src) => {
-		foreach (ITCPrimitive p in prims)
+		foreach (Primitive p in prims)
 		    p.Unlisten(l);
 
 		cb(src);
@@ -138,21 +138,21 @@ namespace Olishell
 	    if (timeoutMs > 0)
 		l.SetTimeout(timeoutMs);
 
-	    foreach (ITCPrimitive p in prims)
+	    foreach (Primitive p in prims)
 		p.Listen(l);
 	}
 
-	public static void WhenSignalled(ITCPrimitive prim,
+	public static void WhenSignalled(Primitive prim,
 					 Callback cb,
 					 int timeoutMs = -1)
 	{
-	    WhenSignalled(new ITCPrimitive[]{prim}, cb, timeoutMs);
+	    WhenSignalled(new Primitive[]{prim}, cb, timeoutMs);
 	}
     }
 
-    // The simplest of the ITC primitives is the event. It is
+    // The simplest of the  primitives is the event. It is
     // raised/cleared manually.
-    class ITCEvent : ITCPrimitive
+    class Event : Primitive
     {
 	volatile bool state = false;
 
@@ -176,13 +176,13 @@ namespace Olishell
     // A semaphore has two operations: raise and lower, and
     // holds an internal count (initially 0). The semaphore is signalled
     // whenever its count is non-negative.
-    class ITCSemaphore : ITCPrimitive
+    class Semaphore : Primitive
     {
 	object stateMutex = new object();
 	int state = 0;
 
-	public ITCSemaphore() { }
-	public ITCSemaphore(int st)
+	public Semaphore() { }
+	public Semaphore(int st)
 	{
 	    state = st;
 	}
@@ -238,14 +238,14 @@ namespace Olishell
     // keep an waitable count of outstanding operations. It contains two
     // operations: Inc() and Dec(). The primitive becomes signalled
     // when the count is 0.
-    class ITCCounter : ITCPrimitive
+    class Counter : Primitive
     {
 	object stateMutex = new object();
 	int state = 0;
 
-	public ITCCounter() { }
+	public Counter() { }
 
-	public ITCCounter(int init)
+	public Counter(int init)
 	{
 	    state = init;
 	}
@@ -290,7 +290,7 @@ namespace Olishell
     // A channel is signalled whenever the buffer is full, or the
     // channel is closed -- in other words, whenever there is new
     // information for the consumer.
-    class ITCChannel<T> : ITCPrimitive
+    class Channel<T> : Primitive
     {
 	object stateMutex = new object();
 	Queue<T> queue = new Queue<T>();
@@ -345,17 +345,17 @@ namespace Olishell
 	}
     }
 
-    // This wrapper is a utility for waiting synchronously on ITC
+    // This wrapper is a utility for waiting synchronously on 
     // primitives.
-    class ITCSync
+    class Sync
     {
 	object mutex = new object();
-	ITCPrimitive result;
+	Primitive result;
 	bool isReady = false;
 
-	ITCSync() { }
+	Sync() { }
 
-	void Send(ITCPrimitive r)
+	void Send(Primitive r)
 	{
 	    lock (mutex)
 	    {
@@ -365,7 +365,7 @@ namespace Olishell
 	    }
 	}
 
-	ITCPrimitive Recv()
+	Primitive Recv()
 	{
 	    lock (mutex)
 		while (!isReady)
@@ -374,80 +374,80 @@ namespace Olishell
 	    return result;
 	}
 
-	public static ITCPrimitive Wait(ITCPrimitive[] prims,
+	public static Primitive Wait(Primitive[] prims,
 					int timeoutMs = -1)
 	{
-	    var s = new ITCSync();
+	    var s = new Sync();
 
-	    ITCPrimitive.WhenSignalled(prims, s.Send, timeoutMs);
+	    Primitive.WhenSignalled(prims, s.Send, timeoutMs);
 	    return s.Recv();
 	}
 
-	public static ITCPrimitive Wait(ITCPrimitive prim, int timeoutMs = -1)
+	public static Primitive Wait(Primitive prim, int timeoutMs = -1)
 	{
-	    return Wait(new ITCPrimitive[]{prim}, timeoutMs);
+	    return Wait(new Primitive[]{prim}, timeoutMs);
 	}
     }
 
     // This wrapper is a utility for scheduling continuations in the
     // thread pool.
-    class ITCCont
+    class Pool
     {
-	public static void Continue(ITCPrimitive[] prims,
-		ITCPrimitive.Callback cb, int timeoutMs = -1)
+	public static void Continue(Primitive[] prims,
+		Primitive.Callback cb, int timeoutMs = -1)
 	{
-	    ITCPrimitive.WhenSignalled(prims, (pr) =>
+	    Primitive.WhenSignalled(prims, (pr) =>
 		ThreadPool.QueueUserWorkItem((obj) => cb(pr)),
 		timeoutMs);
 	}
 
-	public static void Continue(ITCPrimitive prim,
-		ITCPrimitive.Callback cb, int timeoutMs = -1)
+	public static void Continue(Primitive prim,
+		Primitive.Callback cb, int timeoutMs = -1)
 	{
-	    ITCPrimitive.WhenSignalled(prim, (pr) =>
+	    Primitive.WhenSignalled(prim, (pr) =>
 		ThreadPool.QueueUserWorkItem((obj) => cb(pr)),
 		timeoutMs);
 	}
     }
 
     // This wrapper is a utility to produce Tasks for waiting for
-    // ITC primitives. It can either produce a blocking task, or
+    //  primitives. It can either produce a blocking task, or
     // schedule an asynchronous continuation.
-    class ITCTask
+    class WaitTask
     {
-	public static Task<ITCPrimitive> WaitAsync(ITCPrimitive[] prims,
+	public static Task<Primitive> WaitAsync(Primitive[] prims,
 						   int timeoutMs = -1)
 	{
-	    var tsc = new TaskCompletionSource<ITCPrimitive>();
+	    var tsc = new TaskCompletionSource<Primitive>();
 
-	    ITCPrimitive.WhenSignalled(prims,
+	    Primitive.WhenSignalled(prims,
 		(src) => tsc.SetResult(src), timeoutMs);
 
 	    return tsc.Task;
 	}
 
-	public static Task<ITCPrimitive> WaitAsync(ITCPrimitive prim,
+	public static Task<Primitive> WaitAsync(Primitive prim,
 						   int timeoutMs = -1)
 	{
-	    return WaitAsync(new ITCPrimitive[]{prim}, timeoutMs);
+	    return WaitAsync(new Primitive[]{prim}, timeoutMs);
 	}
     }
 
     // This wrapper is another utility which produces a synchronous Gtk
-    // event for a single ITC primitive. Its methods should be called
+    // event for a single  primitive. Its methods should be called
     // only from the Gtk thread.
-    class ITCGtk
+    class GtkListener
     {
-	public delegate void ITCEventHandler(object sender,
+	public delegate void EventHandler(object sender,
 		EventArgs args);
 
-	public event ITCEventHandler Signalled;
-	public readonly ITCPrimitive Primitive;
+	public event EventHandler Signalled;
+	public readonly Primitive Primitive;
 
 	bool enabled = false;
 	bool listening = false;
 
-	public ITCGtk(ITCPrimitive p)
+	public GtkListener(Primitive p)
 	{
 	    Primitive = p;
 	}
@@ -493,7 +493,7 @@ namespace Olishell
 	void listen()
 	{
 	    if (enabled && !listening)
-		ITCPrimitive.WhenSignalled(Primitive, (p) =>
+		Primitive.WhenSignalled(Primitive, (p) =>
 		    Gtk.Application.Invoke(gtkHandler));
 	}
     }

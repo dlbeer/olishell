@@ -41,7 +41,7 @@ namespace Olishell
 	    for (;;) {
 		Debugger.Message msg;
 
-		ITCSync.Wait(db.Output);
+		ITC.Sync.Wait(db.Output);
 
 		if (!db.Output.TryReceive(out msg))
 		    break;

@@ -45,16 +45,16 @@ namespace Olishell
 	}
 
 	// This is the only public interface to a running debugger
-	// manager. Communication is solely via ITC channels. Debugger
+	// manager. Communication is solely via ITC. channels. Debugger
 	// shutdown is requested by closing the input channel.
-	public readonly ITCChannel<Message> Output = new ITCChannel<Message>();
+	public readonly ITC.Channel<Message> Output = new ITC.Channel<Message>();
 
 	// This event becomes signalled when the debugger is ready to
 	// accept a command.
-	public readonly ITCEvent Ready = new ITCEvent();
+	public readonly ITC.Event Ready = new ITC.Event();
 
 	// Commands are sent to the debugger via this channel.
-	public readonly ITCChannel<string> Commands = new ITCChannel<string>();
+	public readonly ITC.Channel<string> Commands = new ITC.Channel<string>();
 
 	// Cancellation of a running command is requested by raising
 	// this semaphore. If you need to avoid race conditions for a
@@ -70,14 +70,14 @@ namespace Olishell
 	// Cancellation requests are accepted and ignored when the
 	// manager process is ready for a command. The CancelAccepted
 	// event is still raised.
-	public readonly ITCEvent Cancel = new ITCEvent();
-	public readonly ITCEvent CancelAccepted = new ITCEvent();
+	public readonly ITC.Event Cancel = new ITC.Event();
+	public readonly ITC.Event CancelAccepted = new ITC.Event();
 
 	// Clients don't speak directly to the debugger process. The
 	// intermediate debugger task uses these channels to communicate
 	// with the actual process.
-	ITCCounter streamCount = new ITCCounter(2);
-	ITCChannel<Message> rawOutput = new ITCChannel<Message>();
+	ITC.Counter streamCount = new ITC.Counter(2);
+	ITC.Channel<Message> rawOutput = new ITC.Channel<Message>();
 	StreamWriter rawInput;
 
 	// Start an mspdebug subprocess and three logical asynchronous
@@ -116,7 +116,7 @@ namespace Olishell
 	    p.BeginOutputReadLine();
 	    p.BeginErrorReadLine();
 
-	    ITCPrimitive.WhenSignalled(streamCount, (pr) => rawOutput.Close());
+	    ITC.Primitive.WhenSignalled(streamCount, (pr) => rawOutput.Close());
 	    ManagerBusy(null);
 	}
 
@@ -167,7 +167,7 @@ namespace Olishell
 
 	// Manager: busy state. A command, or startup is in progress. We
 	// move to the ready state once the command is finished.
-	void ManagerBusy(ITCPrimitive source)
+	void ManagerBusy(ITC.Primitive source)
 	{
 	    Message msg;
 
@@ -201,13 +201,13 @@ namespace Olishell
 		}
 	    }
 
-	    ITCCont.Continue(new ITCPrimitive[]{Cancel, rawOutput},
+	    ITC.Pool.Continue(new ITC.Primitive[]{Cancel, rawOutput},
 		this.ManagerBusy);
 	}
 
 	// Manager: ready state. mspdebug is sitting idle and waiting
 	// for a command.
-	void ManagerReady(ITCPrimitive source)
+	void ManagerReady(ITC.Primitive source)
 	{
 	    string cmd;
 
@@ -242,7 +242,7 @@ namespace Olishell
 		Ready.Raise();
 	    }
 
-	    ITCCont.Continue(new ITCPrimitive[]{Cancel, Commands},
+	    ITC.Pool.Continue(new ITC.Primitive[]{Cancel, Commands},
 		this.ManagerReady);
 	}
 
@@ -251,7 +251,7 @@ namespace Olishell
 	// acknowledgement of receipt before doing anything further,
 	// otherwise any cancellation requests we might want to send
 	// could get lost without effect.
-	void ManagerSubmitting(ITCPrimitive source)
+	void ManagerSubmitting(ITC.Primitive source)
 	{
 	    Message msg;
 
@@ -272,12 +272,12 @@ namespace Olishell
 		}
 	    }
 
-	    ITCCont.Continue(rawOutput, this.ManagerSubmitting);
+	    ITC.Pool.Continue(rawOutput, this.ManagerSubmitting);
 	}
 
 	// We've closed mspdebug's stdin and are now waiting for process
 	// exit.
-	void ManagerExiting(ITCPrimitive source)
+	void ManagerExiting(ITC.Primitive source)
 	{
 	    Message msg;
 
@@ -290,7 +290,7 @@ namespace Olishell
 	    if (rawOutput.TryReceive(out msg))
 		Output.Send(msg);
 
-	    ITCCont.Continue(rawOutput, this.ManagerExiting);
+	    ITC.Pool.Continue(rawOutput, this.ManagerExiting);
 	}
     }
 }
