@@ -25,37 +25,11 @@ namespace Olishell
     {
 	public static void Main()
 	{
-	    GtkTest();
-	}
-
-	static void DBTest()
-	{
-	    var db = new Debugger("/usr/local/bin/mspdebug",
-		"--embed sim");
-
-	    db.Commands.Send("prog /home/dlbeer/work/fet-fw/20401004.hex");
-	    db.Commands.Send("regs");
-	    db.Commands.Send("step");
-	    db.Commands.Close();
-
-	    for (;;) {
-		Debugger.Message msg;
-
-		ITC.Sync.Wait(db.Output);
-
-		if (!db.Output.TryReceive(out msg))
-		    break;
-
-		Console.WriteLine("RECV: " + msg.Text);
-	    }
-	}
-
-	static void GtkTest()
-	{
 	    Application.Init();
 
 	    Window win = new Window("Test");
 	    win.Resize(640, 480);
+	    win.DeleteEvent += (obj, evt) => Application.Quit();
 
 	    var dv = new DebugView();
 	    var db = new Debugger("/usr/local/bin/mspdebug",
