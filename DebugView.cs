@@ -140,6 +140,7 @@ namespace Olishell
 
 	    runStop.Label = "Run";
 	    command.Sensitive = true;
+	    command.GrabFocus();
 	}
     }
 }

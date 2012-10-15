@@ -28,14 +28,108 @@ namespace Olishell
 
 	public App()
 	{
+	    AccelGroup agr = new AccelGroup();
+	    VBox vb = new VBox(false, 2);
+
 	    MainWin.Resize(700, 500);
 	    MainWin.DeleteEvent += (obj, evt) => Application.Quit();
+	    MainWin.AddAccelGroup(agr);
 
 	    debugView = new DebugView();
-	    MainWin.Add(debugView.View);
 
-	    // FIXME: testing
+	    vb.PackStart(CreateMenuBar(agr), false, false, 0);
+	    vb.PackEnd(debugView.View, true, true, 0);
+	    MainWin.Add(vb);
+
+	    // FIXME: for testing
 	    debugView.Debugger = new Debugger("mspdebug", "--embed sim");
+	}
+
+	// Create and return the menu bar
+	MenuBar CreateMenuBar(AccelGroup agr)
+	{
+	    MenuBar mb = new MenuBar();
+
+	    mb.Append(CreateFileMenu(agr));
+	    mb.Append(CreateDebuggerMenu(agr));
+	    mb.Append(CreateHelpMenu(agr));
+
+	    return mb;
+	}
+
+	// Create "File" menu
+	MenuItem CreateFileMenu(AccelGroup agr)
+	{
+	    MenuItem file = new MenuItem("_File");
+	    Menu fileMenu = new Menu();
+	    file.Submenu = fileMenu;
+
+	    MenuItem quit = new ImageMenuItem(Stock.Quit, agr);
+	    quit.Activated += (obj, evt) => Application.Quit();
+	    fileMenu.Append(quit);
+
+	    return file;
+	}
+
+	// Create "Debugger" menu
+	MenuItem CreateDebuggerMenu(AccelGroup agr)
+	{
+	    MenuItem dbg = new MenuItem("_Debugger");
+	    Menu dbgMenu = new Menu();
+	    dbg.Submenu = dbgMenu;
+
+	    MenuItem intr = new ImageMenuItem(Stock.Cancel, agr);
+	    ((Label)intr.Children[0]).Text = "Interrupt";
+	    intr.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.F9, Gdk.ModifierType.None,
+		AccelFlags.Visible));
+	    intr.Activated += OnDebuggerStop;
+	    dbgMenu.Append(intr);
+
+	    return dbg;
+	}
+
+	// Debugger -> Stop
+	void OnDebuggerStop(object sender, EventArgs args)
+	{
+	    Debugger dbg = debugView.Debugger;
+
+	    if (dbg != null)
+		dbg.Cancel.Raise();
+	}
+
+	// Create "Help" menu
+	MenuItem CreateHelpMenu(AccelGroup agr)
+	{
+	    MenuItem help = new MenuItem("_Help");
+	    Menu helpMenu = new Menu();
+	    help.Submenu = helpMenu;
+
+	    MenuItem about = new ImageMenuItem(Stock.About, agr);
+	    about.Activated += OnHelpAbout;
+	    helpMenu.Append(about);
+
+	    return help;
+	}
+
+	// Help -> About
+	void OnHelpAbout(object sender, EventArgs args)
+	{
+	    var dlg = new AboutDialog();
+
+	    dlg.Title = "Olishell";
+	    dlg.ProgramName = "Olishell";
+	    dlg.WrapLicense = true;
+	    dlg.Copyright = "Copyright (C) 2012 Olimex Ltd";
+	    dlg.License =
+		"This program is free software; you can redistribute it " +
+		"and/or modify it under the terms of the GNU General " +
+		"Public License as published by the Free Software " +
+		"Foundation; either version 2 of the License, or (at " +
+		"your option) any later version.";
+
+	    dlg.Run();
+	    dlg.Hide();
 	}
 
 	// Do not call this function from the Gtk main loop!
