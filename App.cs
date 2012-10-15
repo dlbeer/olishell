@@ -25,7 +25,7 @@ namespace Olishell
     {
 	public static void Main()
 	{
-	    DBTest();
+	    GtkTest();
 	}
 
 	static void DBTest()
@@ -57,20 +57,24 @@ namespace Olishell
 	    Window win = new Window("Test");
 	    win.Resize(640, 480);
 
-	    ConsoleLog log = new ConsoleLog();
-	    win.Add(log.View);
+	    var dv = new DebugView();
+	    var db = new Debugger("/usr/local/bin/mspdebug",
+		"--embed sim");
+
+	    dv.Debugger = db;
+
+	    win.Add(dv.View);
 	    win.ShowAll();
 
-	    while (Application.EventsPending())
-		Application.RunIteration();
-
-	    log.AddLine("Hello world");
-	    for (int i = 0; i < 50; i++)
-		log.AddLine(Convert.ToString(i));
-	    log.AddLine("This is a \x1b[1mtest\x1b[0m of the console");
-	    log.AddLine("This should be \x1b[32mgreen");
-
 	    Application.Run();
+
+	    // Wait synchronously for debugger close
+	    Debugger.Message msg;
+
+	    db.Cancel.Raise();
+	    db.Commands.Close();
+	    while (db.Output.TryReceive(out msg))
+		ITC.Sync.Wait(db.Output);
 	}
     }
 }

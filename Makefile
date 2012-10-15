@@ -4,6 +4,7 @@ SOURCE = \
     App.cs \
     ConsoleLog.cs \
     ITC.cs \
+    DebugView.cs \
     Debugger.cs
 
 olishell.exe: $(SOURCE)
