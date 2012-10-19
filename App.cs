@@ -24,25 +24,47 @@ namespace Olishell
     class App
     {
 	public readonly Window MainWin = new Window("Olishell");
-	DebugView debugView;
+	DebugView debugView = new DebugView();
+	PowerView powerView = new PowerView();
 
 	public App()
 	{
 	    AccelGroup agr = new AccelGroup();
-	    VBox vb = new VBox(false, 2);
+	    VBox vb = new VBox(false, 3);
+	    VPaned hp = new VPaned();
 
 	    MainWin.Resize(700, 500);
 	    MainWin.DeleteEvent += (obj, evt) => Application.Quit();
 	    MainWin.AddAccelGroup(agr);
 
-	    debugView = new DebugView();
+	    hp.Add(powerView.View);
+	    hp.Add(debugView.View);
 
 	    vb.PackStart(CreateMenuBar(agr), false, false, 0);
-	    vb.PackEnd(debugView.View, true, true, 0);
+	    vb.PackEnd(hp, true, true, 0);
 	    MainWin.Add(vb);
 
-	    // FIXME: for testing
+	    // FIXME: testing
 	    debugView.Debugger = new Debugger("mspdebug", "--embed sim");
+
+	    {
+		SampleQueue sq = new SampleQueue(55, 2048);
+		int i;
+		int[] chunk = new int[512];
+
+		for (i = 1; i < chunk.Length / 2; i++)
+		{
+		    chunk[i] = 3000 + (i * 327 + i * 45) % 300;
+		    chunk[i + chunk.Length / 2] =
+			5000 + (i * 327 + i * 45) % 300;
+		}
+
+		sq.Push(chunk);
+		sq.Push(chunk);
+		sq.Push(chunk);
+		sq.Push(chunk);
+		powerView.Model = sq;
+	    }
 	}
 
 	// Create and return the menu bar
