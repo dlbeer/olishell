@@ -24,11 +24,15 @@ namespace Olishell
     class App
     {
 	public readonly Window MainWin = new Window("Olishell");
-	DebugView debugView = new DebugView();
+	DebugManager debugManager;
+	DebugView debugView;
 	PowerView powerView = new PowerView();
 
-	public App()
+	public App(DebugManager mgr)
 	{
+	    debugManager = mgr;
+	    debugView = new DebugView(mgr);
+
 	    AccelGroup agr = new AccelGroup();
 	    VBox vb = new VBox(false, 3);
 	    VPaned hp = new VPaned();
@@ -45,8 +49,6 @@ namespace Olishell
 	    MainWin.Add(vb);
 
 	    // FIXME: testing
-	    debugView.Debugger = new Debugger("mspdebug", "--embed sim");
-
 	    {
 		SampleQueue sq = new SampleQueue(55, 2048);
 		int i;
@@ -114,10 +116,7 @@ namespace Olishell
 	// Debugger -> Stop
 	void OnDebuggerStop(object sender, EventArgs args)
 	{
-	    Debugger dbg = debugView.Debugger;
-
-	    if (dbg != null)
-		dbg.Cancel.Raise();
+	    debugManager.SendInterrupt();
 	}
 
 	// Create "Help" menu
@@ -154,38 +153,24 @@ namespace Olishell
 	    dlg.Hide();
 	}
 
-	// Do not call this function from the Gtk main loop!
-	void DebuggerSyncExit()
-	{
-	    Debugger dbg = debugView.Debugger;
-
-	    if (dbg != null)
-	    {
-		// Interrupt the debugger and signal end-of-input
-		dbg.Cancel.Raise();
-		dbg.Commands.Close();
-
-		// Wait for the output to drain
-		while (!dbg.Output.IsClosed)
-		{
-		    Debugger.Message msg;
-
-		    ITC.Sync.Wait(dbg.Output);
-		    while (dbg.Output.TryReceive(out msg));
-		}
-	    }
-	}
-
 	public static void Main()
 	{
+	    DebugManager mgr = new DebugManager();
+
 	    Application.Init();
 
-	    var app = new App();
+	    var app = new App(mgr);
 	    app.MainWin.DeleteEvent += (obj, evt) => Application.Quit();
 	    app.MainWin.ShowAll();
+
+	    mgr.Start("/usr/local/bin/mspdebug", "--embed sim");
+
 	    Application.Run();
 
-	    app.DebuggerSyncExit();
+	    // Synchronously terminate the debugger
+	    mgr.Terminate();
+	    while (mgr.IsRunning)
+		Application.RunIteration();
 	}
     }
 }

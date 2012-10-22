@@ -27,13 +27,11 @@ namespace Olishell
 	Button		runStop;
 	Entry		command;
 	ConsoleLog	log;
+	DebugManager	debugManager;
 
-	Debugger	debug;
-	ITC.GtkListener	messageEvent;
-	ITC.GtkListener	readyEvent;
-
-	public DebugView()
+	public DebugView(DebugManager mgr)
 	{
+	    debugManager = mgr;
 	    layout = new Table(2, 2, false);
 	    runStop = new Button("Interrupt");
 	    command = new Entry();
@@ -55,6 +53,13 @@ namespace Olishell
 
 	    command.Sensitive = false;
 	    runStop.Sensitive = false;
+
+	    mgr.MessageReceived += OnDebugOutput;
+	    mgr.DebuggerBusy += OnBusy;
+	    mgr.DebuggerReady += OnReady;
+	    mgr.DebuggerStarted += OnStarted;
+	    mgr.DebuggerExited += OnExited;
+	    layout.Destroyed += OnDestroy;
 	}
 
 	public Widget View
@@ -62,50 +67,21 @@ namespace Olishell
 	    get { return layout; }
 	}
 
-	public Debugger Debugger
+	void OnDestroy(object sender, EventArgs args)
 	{
-	    get { return debug; }
-	    set
-	    {
-		if (debug != null)
-		    TeardownEvents();
-
-		debug = value;
-
-		if (debug != null)
-		    SetupEvents();
-
-		runStop.Label = "Interrupt";
-		runStop.Sensitive = (debug != null);
-		command.Sensitive = false;
-	    }
+	    debugManager.MessageReceived -= OnDebugOutput;
+	    debugManager.DebuggerBusy -= OnBusy;
+	    debugManager.DebuggerReady -= OnReady;
+	    debugManager.DebuggerStarted -= OnStarted;
+	    debugManager.DebuggerExited -= OnExited;
 	}
 
-	void TeardownEvents()
+	void OnDebugOutput(object sender, DebugManager.MessageEventArgs args)
 	{
-	    messageEvent.Disable();
-	    readyEvent.Disable();
-	}
+	    Debugger.Message msg = args.Message;
 
-	void SetupEvents()
-	{
-	    messageEvent = new ITC.GtkListener(debug.Output);
-	    messageEvent.Signalled += OnDebugOutput;
-
-	    readyEvent = new ITC.GtkListener(debug.Ready);
-	    readyEvent.Signalled += OnReady;
-	}
-
-	void OnDebugOutput(object sender, EventArgs args)
-	{
-	    Debugger.Message msg;
-
-	    while (debug.Output.TryReceive(out msg))
-		if (msg.Type != Debugger.MessageType.Shell)
-		    log.AddLine(msg.Text);
-
-	    if (debug.Output.IsClosed)
-		Debugger = null;
+	    if (msg.Type != Debugger.MessageType.Shell)
+		log.AddLine(msg.Text);
 	}
 
 	void OnCommand(object sender, EventArgs args)
@@ -120,24 +96,38 @@ namespace Olishell
 		text = text.Substring(0, nl);
 
 	    log.AddLine("==> " + text);
-	    debug.Commands.Send(text);
-
-	    runStop.Label = "Interrupt";
-	    command.Sensitive = false;
+	    debugManager.SendCommand(text);
 	}
 
 	void OnRunStop(object sender, EventArgs args)
 	{
-	    if (command.Sensitive)
+	    if (debugManager.IsReady)
 		OnCommand(sender, args);
 	    else
-		debug.Cancel.Raise();
+		debugManager.SendInterrupt();
+	}
+
+	void OnStarted(object sender, EventArgs args)
+	{
+	    runStop.Label = "Interrupt";
+	    command.Sensitive = false;
+	    runStop.Sensitive = true;
+	}
+
+	void OnExited(object sender, EventArgs args)
+	{
+	    runStop.Sensitive = false;
+	    command.Sensitive = false;
+	}
+
+	void OnBusy(object sender, EventArgs args)
+	{
+	    runStop.Label = "Interrupt";
+	    command.Sensitive = false;
 	}
 
 	void OnReady(object sender, EventArgs args)
 	{
-	    debug.Ready.Clear();
-
 	    runStop.Label = "Run";
 	    command.Sensitive = true;
 	    command.GrabFocus();
