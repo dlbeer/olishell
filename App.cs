@@ -24,16 +24,16 @@ namespace Olishell
     class App
     {
 	public readonly Window MainWin = new Window("Olishell");
-	DebugManager debugManager;
 	DebugView debugView;
 	PowerView powerView = new PowerView();
+	AppMenu menu;
 
 	public App(DebugManager mgr)
 	{
-	    debugManager = mgr;
-	    debugView = new DebugView(mgr);
-
 	    AccelGroup agr = new AccelGroup();
+	    debugView = new DebugView(mgr);
+	    menu = new AppMenu(mgr, agr);
+
 	    VBox vb = new VBox(false, 3);
 	    VPaned hp = new VPaned();
 
@@ -44,7 +44,7 @@ namespace Olishell
 	    hp.Add(powerView.View);
 	    hp.Add(debugView.View);
 
-	    vb.PackStart(CreateMenuBar(agr), false, false, 0);
+	    vb.PackStart(menu.View, false, false, 0);
 	    vb.PackEnd(hp, true, true, 0);
 	    MainWin.Add(vb);
 
@@ -67,90 +67,6 @@ namespace Olishell
 		sq.Push(chunk);
 		powerView.Model = sq;
 	    }
-	}
-
-	// Create and return the menu bar
-	MenuBar CreateMenuBar(AccelGroup agr)
-	{
-	    MenuBar mb = new MenuBar();
-
-	    mb.Append(CreateFileMenu(agr));
-	    mb.Append(CreateDebuggerMenu(agr));
-	    mb.Append(CreateHelpMenu(agr));
-
-	    return mb;
-	}
-
-	// Create "File" menu
-	MenuItem CreateFileMenu(AccelGroup agr)
-	{
-	    MenuItem file = new MenuItem("_File");
-	    Menu fileMenu = new Menu();
-	    file.Submenu = fileMenu;
-
-	    MenuItem quit = new ImageMenuItem(Stock.Quit, agr);
-	    quit.Activated += (obj, evt) => Application.Quit();
-	    fileMenu.Append(quit);
-
-	    return file;
-	}
-
-	// Create "Debugger" menu
-	MenuItem CreateDebuggerMenu(AccelGroup agr)
-	{
-	    MenuItem dbg = new MenuItem("_Debugger");
-	    Menu dbgMenu = new Menu();
-	    dbg.Submenu = dbgMenu;
-
-	    MenuItem intr = new ImageMenuItem(Stock.Cancel, agr);
-	    ((Label)intr.Children[0]).Text = "Interrupt";
-	    intr.AddAccelerator("activate", agr,
-		new AccelKey(Gdk.Key.F9, Gdk.ModifierType.None,
-		AccelFlags.Visible));
-	    intr.Activated += OnDebuggerStop;
-	    dbgMenu.Append(intr);
-
-	    return dbg;
-	}
-
-	// Debugger -> Stop
-	void OnDebuggerStop(object sender, EventArgs args)
-	{
-	    debugManager.SendInterrupt();
-	}
-
-	// Create "Help" menu
-	MenuItem CreateHelpMenu(AccelGroup agr)
-	{
-	    MenuItem help = new MenuItem("_Help");
-	    Menu helpMenu = new Menu();
-	    help.Submenu = helpMenu;
-
-	    MenuItem about = new ImageMenuItem(Stock.About, agr);
-	    about.Activated += OnHelpAbout;
-	    helpMenu.Append(about);
-
-	    return help;
-	}
-
-	// Help -> About
-	void OnHelpAbout(object sender, EventArgs args)
-	{
-	    var dlg = new AboutDialog();
-
-	    dlg.Title = "Olishell";
-	    dlg.ProgramName = "Olishell";
-	    dlg.WrapLicense = true;
-	    dlg.Copyright = "Copyright (C) 2012 Olimex Ltd";
-	    dlg.License =
-		"This program is free software; you can redistribute it " +
-		"and/or modify it under the terms of the GNU General " +
-		"Public License as published by the Free Software " +
-		"Foundation; either version 2 of the License, or (at " +
-		"your option) any later version.";
-
-	    dlg.Run();
-	    dlg.Hide();
 	}
 
 	public static void Main()

@@ -8,7 +8,8 @@ SOURCE = \
     Debugger.cs \
     SampleQueue.cs \
     PowerView.cs \
-    DebugManager.cs
+    DebugManager.cs \
+    AppMenu.cs
 
 olishell.exe: $(SOURCE)
 	$(CSC) -pkg:gtk-sharp-2.0 -out:$@ $(SOURCE)
