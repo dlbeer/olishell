@@ -23,62 +23,77 @@ namespace Olishell
 {
     class App
     {
-	public readonly Window MainWin = new Window("Olishell");
+	Window mainWin = new Window("Olishell");
 	DebugView debugView;
 	PowerView powerView = new PowerView();
+	VPaned pane = new VPaned();
 	AppMenu menu;
+	Settings settings;
 
-	public App(DebugManager mgr)
+	public App(Settings set, DebugManager mgr)
 	{
+	    settings = set;
 	    AccelGroup agr = new AccelGroup();
 	    debugView = new DebugView(mgr);
 	    menu = new AppMenu(mgr, agr);
 
 	    VBox vb = new VBox(false, 3);
-	    VPaned hp = new VPaned();
 
-	    MainWin.Resize(700, 500);
-	    MainWin.DeleteEvent += (obj, evt) => Application.Quit();
-	    MainWin.AddAccelGroup(agr);
+	    mainWin.Resize(settings.WindowWidth, settings.WindowHeight);
+	    mainWin.DeleteEvent += (obj, evt) => Application.Quit();
+	    mainWin.AddAccelGroup(agr);
 
-	    hp.Add(powerView.View);
-	    hp.Add(debugView.View);
+	    pane.Add(powerView.View);
+	    pane.Add(debugView.View);
+	    pane.Position = settings.SizerPosition;
 
 	    vb.PackStart(menu.View, false, false, 0);
-	    vb.PackEnd(hp, true, true, 0);
-	    MainWin.Add(vb);
+	    vb.PackEnd(pane, true, true, 0);
+	    mainWin.Add(vb);
 
+	    mainWin.DeleteEvent += OnDeleteEvent;
+	    mainWin.ShowAll();
+
+	    Test();
+	}
+
+	void OnDeleteEvent(object sender, EventArgs args)
+	{
+	    settings.SizerPosition = pane.Position;
+	    mainWin.GetSize(out settings.WindowWidth,
+			    out settings.WindowHeight);
+	    Application.Quit();
+	}
+
+	void Test()
+	{
 	    // FIXME: testing
+	    SampleQueue sq = new SampleQueue(55, 2048);
+	    int i;
+	    int[] chunk = new int[512];
+
+	    for (i = 1; i < chunk.Length / 2; i++)
 	    {
-		SampleQueue sq = new SampleQueue(55, 2048);
-		int i;
-		int[] chunk = new int[512];
-
-		for (i = 1; i < chunk.Length / 2; i++)
-		{
-		    chunk[i] = 3000 + (i * 327 + i * 45) % 300;
-		    chunk[i + chunk.Length / 2] =
-			5000 + (i * 327 + i * 45) % 300;
-		}
-
-		sq.Push(chunk);
-		sq.Push(chunk);
-		sq.Push(chunk);
-		sq.Push(chunk);
-		powerView.Model = sq;
+		chunk[i] = 3000 + (i * 327 + i * 45) % 300;
+		chunk[i + chunk.Length / 2] =
+		    5000 + (i * 327 + i * 45) % 300;
 	    }
+
+	    sq.Push(chunk);
+	    sq.Push(chunk);
+	    sq.Push(chunk);
+	    sq.Push(chunk);
+	    powerView.Model = sq;
 	}
 
 	public static void Main()
 	{
 	    DebugManager mgr = new DebugManager();
+	    Settings settings = Settings.Load();
 
 	    Application.Init();
 
-	    var app = new App(mgr);
-	    app.MainWin.DeleteEvent += (obj, evt) => Application.Quit();
-	    app.MainWin.ShowAll();
-
+	    new App(settings, mgr);
 	    mgr.Start("/usr/local/bin/mspdebug", "--embed sim");
 
 	    Application.Run();
@@ -87,6 +102,8 @@ namespace Olishell
 	    mgr.Terminate();
 	    while (mgr.IsRunning)
 		Application.RunIteration();
+
+	    settings.Save();
 	}
     }
 }
