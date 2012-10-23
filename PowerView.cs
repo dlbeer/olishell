@@ -29,6 +29,7 @@ namespace Olishell
 	int		scale = 1;
 	int		vertMax = 10;
 	Gdk.Rectangle	allocation;
+	uint		timerID;
 
 	Gdk.GC		gcBar;
 	Gdk.GC		gcGrid;
@@ -51,11 +52,25 @@ namespace Olishell
 	void OnDestroy(object sender, EventArgs args)
 	{
 	    debugManager.PowerChanged -= OnPowerChanged;
+
+	    if (timerID != 0)
+	    {
+		GLib.Source.Remove(timerID);
+		timerID = 0;
+	    }
 	}
 
 	void OnPowerChanged(object sender, EventArgs args)
 	{
+	    if (timerID == 0)
+		timerID = GLib.Timeout.Add(100, OnTimer);
+	}
+
+	bool OnTimer()
+	{
+	    timerID = 0;
 	    updateSizing();
+	    return false;
 	}
 
 	public Widget View
