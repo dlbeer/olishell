@@ -76,8 +76,8 @@ namespace Olishell
 
 	    chooseDialog = new FileChooserDialog("Choose MSPDebug binary",
 		dialog, FileChooserAction.Open,
-		new object[]{Stock.Ok, ResponseType.Ok,
-			     Stock.Cancel, ResponseType.Cancel});
+		new object[]{Stock.Cancel, ResponseType.Cancel,
+			     Stock.Ok, ResponseType.Ok});
 	    chooseDialog.DefaultResponse = ResponseType.Ok;
 	}
 

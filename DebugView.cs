@@ -147,5 +147,10 @@ namespace Olishell
 	{
 	    log.Clear();
 	}
+
+	public string Transcript
+	{
+	    get { return log.Transcript; }
+	}
     }
 }

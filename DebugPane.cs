@@ -104,5 +104,10 @@ namespace Olishell
 	{
 	    debugView.ClearText();
 	}
+
+	public string Transcript
+	{
+	    get { return debugView.Transcript; }
+	}
     }
 }

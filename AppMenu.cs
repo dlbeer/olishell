@@ -17,6 +17,8 @@
 // USA
 
 using System;
+using System.Text;
+using System.IO;
 using Gtk;
 
 namespace Olishell
@@ -109,11 +111,81 @@ namespace Olishell
 	    Menu fileMenu = new Menu();
 	    file.Submenu = fileMenu;
 
+	    MenuItem save = new ImageMenuItem(Stock.SaveAs, agr);
+	    ((Label)save.Children[0]).Text = "Save transcript...";
+	    save.Activated += OnSaveTranscript;
+	    fileMenu.Append(save);
+
 	    MenuItem quit = new ImageMenuItem(Stock.Quit, agr);
 	    quit.Activated += (obj, evt) => Application.Quit();
 	    fileMenu.Append(quit);
 
 	    return file;
+	}
+
+	// File -> Save transcript
+	void OnSaveTranscript(object sender, EventArgs args)
+	{
+	    FileChooserDialog dlg = new FileChooserDialog("Save transcript",
+		null, FileChooserAction.Save,
+		new object[]{Stock.Cancel, ResponseType.Cancel,
+			     Stock.Ok, ResponseType.Ok});
+
+	    dlg.DefaultResponse = ResponseType.Ok;
+
+	    for (;;)
+	    {
+		if ((ResponseType)dlg.Run() == ResponseType.Ok)
+		{
+		    if (DoSaveTranscript(dlg.Filename))
+			break;
+		}
+		else
+		{
+		    break;
+		}
+	    }
+
+	    dlg.Hide();
+	}
+
+	bool DoSaveTranscript(string filename)
+	{
+	    if (File.Exists(filename))
+	    {
+		MessageDialog dlg = new MessageDialog(null,
+		    DialogFlags.Modal, MessageType.Question,
+		    ButtonsType.YesNo,
+		    "Do you want to overwrite the existing file?");
+
+		ResponseType rt = (ResponseType)dlg.Run();
+		dlg.Hide();
+
+		if (rt != ResponseType.Yes)
+		    return false;
+	    }
+
+	    try
+	    {
+		using (Stream s = File.Create(filename))
+		    using (StreamWriter sw = new StreamWriter(s,
+				Encoding.UTF8))
+			sw.Write(debugPane.Transcript);
+	    }
+	    catch (Exception ex)
+	    {
+		MessageDialog dlg = new MessageDialog
+		    (null, DialogFlags.Modal, MessageType.Error,
+		     ButtonsType.Ok, "Can't write transcript: {0}",
+		     ex.Message);
+
+		dlg.Title = "Olishell";
+		dlg.Run();
+		dlg.Hide();
+		return false;
+	    }
+
+	    return true;
 	}
 
 	// Create "Edit" menu

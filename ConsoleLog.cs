@@ -186,5 +186,11 @@ namespace Olishell
 
 	    buf.CopyClipboard(Clipboard.Get(Gdk.Selection.Clipboard));
 	}
+
+	// Retrieve full transcript
+	public string Transcript
+	{
+	    get { return textView.Buffer.Text; }
+	}
     }
 }
