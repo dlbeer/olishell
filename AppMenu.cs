@@ -27,6 +27,7 @@ namespace Olishell
 
 	MenuBar			menuBar;
 	DebugManager		debugManager;
+	DebugPane		debugPane;
 	PreferencesDialog	preferences;
 
 	// View: power graph visible
@@ -38,9 +39,11 @@ namespace Olishell
 	MenuItem		debuggerInterrupt;
 
 	public AppMenu(DebugManager mgr, AccelGroup agr,
-		       Settings set, Window parent)
+		       Settings set, Window parent,
+		       DebugPane pane)
 	{
 	    settings = set;
+	    debugPane = pane;
 	    debugManager = mgr;
 	    menuBar = new MenuBar();
 	    preferences = new PreferencesDialog(set, parent);
@@ -119,6 +122,19 @@ namespace Olishell
 	    MenuItem edit = new MenuItem("_Edit");
 	    Menu editMenu = new Menu();
 	    edit.Submenu = editMenu;
+
+	    MenuItem copy = new ImageMenuItem(Stock.Copy, agr);
+	    copy.Activated += (obj, evt) => debugPane.CopyText();
+	    editMenu.Append(copy);
+
+	    MenuItem selectAll = new ImageMenuItem(Stock.SelectAll, agr);
+	    selectAll.Activated += (obj, evt) => debugPane.SelectAll();
+	    editMenu.Append(selectAll);
+
+	    MenuItem clear = new ImageMenuItem(Stock.Clear, agr);
+	    ((Label)clear.Children[0]).Text = "Clear transcript";
+	    clear.Activated += (obj, evt) => debugPane.ClearText();
+	    editMenu.Append(clear);
 
 	    MenuItem prefs = new ImageMenuItem(Stock.Preferences, agr);
 	    prefs.Activated += (obj, evt) => preferences.Run();

@@ -132,5 +132,20 @@ namespace Olishell
 	    command.Sensitive = true;
 	    command.GrabFocus();
 	}
+
+	public void SelectAll()
+	{
+	    log.SelectAll();
+	}
+
+	public void CopyText()
+	{
+	    log.CopyText();
+	}
+
+	public void ClearText()
+	{
+	    log.Clear();
+	}
     }
 }

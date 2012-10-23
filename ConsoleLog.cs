@@ -170,5 +170,21 @@ namespace Olishell
 
 	    return state;
 	}
+
+	// Select all text
+	public void SelectAll()
+	{
+	    TextBuffer buf = textView.Buffer;
+
+	    buf.SelectRange(buf.StartIter, buf.EndIter);
+	}
+
+	// Copy selected text
+	public void CopyText()
+	{
+	    TextBuffer buf = textView.Buffer;
+
+	    buf.CopyClipboard(Clipboard.Get(Gdk.Selection.Clipboard));
+	}
     }
 }

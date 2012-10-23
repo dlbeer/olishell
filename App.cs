@@ -34,7 +34,7 @@ namespace Olishell
 	    debugPane = new DebugPane(set, mgr);
 
 	    AccelGroup agr = new AccelGroup();
-	    menu = new AppMenu(mgr, agr, set, mainWin);
+	    menu = new AppMenu(mgr, agr, set, mainWin, debugPane);
 
 	    VBox vb = new VBox(false, 3);
 

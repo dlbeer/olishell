@@ -89,5 +89,20 @@ namespace Olishell
 	{
 	    settings.SizerPosition = pane.Position;
 	}
+
+	public void SelectAll()
+	{
+	    debugView.SelectAll();
+	}
+
+	public void CopyText()
+	{
+	    debugView.CopyText();
+	}
+
+	public void ClearText()
+	{
+	    debugView.ClearText();
+	}
     }
 }
