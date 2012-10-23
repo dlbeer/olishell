@@ -67,6 +67,9 @@ namespace Olishell
 	// Add new samples to the buffer, possibly pushing out old ones.
 	public void Push(int[] incoming)
 	{
+	    if (incoming.Length == 0)
+		return;
+
 	    int head = (start + count) % samples.Length;
 	    int max = incoming.Max();
 

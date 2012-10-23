@@ -19,6 +19,7 @@
 using System;
 using System.Reflection;
 using System.IO;
+using System.Xml;
 using Gtk;
 
 namespace Olishell
@@ -40,6 +41,7 @@ namespace Olishell
 	Settings		settings;
 	Debugger		debug;
 	bool			isReady = false;
+	SampleQueue		powerData;
 
 	// Public events for state changes.
 	public event EventHandler DebuggerStarted;
@@ -47,10 +49,17 @@ namespace Olishell
 	public event EventHandler DebuggerBusy;
 	public event EventHandler DebuggerExited;
 	public event MessageEventHandler MessageReceived;
+	public event EventHandler PowerChanged;
 
 	public DebugManager(Settings set)
 	{
 	    settings = set;
+	}
+
+	// Fetch power sample data
+	public SampleQueue PowerData
+	{
+	    get { return powerData; }
 	}
 
 	// Do we have a running debugger?
@@ -148,7 +157,12 @@ namespace Olishell
 	    Debugger.Message msg;
 
 	    while (debug.Output.TryReceive(out msg))
-		MessageReceived(this, new MessageEventArgs(msg));
+	    {
+		if (msg.Type == Debugger.MessageType.Shell)
+		    HandleShell(msg);
+		else if (MessageReceived != null)
+		    MessageReceived(this, new MessageEventArgs(msg));
+	    }
 
 	    if (debug.Output.IsClosed)
 	    {
@@ -161,6 +175,63 @@ namespace Olishell
 		if (DebuggerExited != null)
 		    DebuggerExited(this, null);
 	    }
+	}
+
+	// Process a shell message
+	void HandleShell(Debugger.Message msg)
+	{
+	    int spc = msg.Text.IndexOf(' ');
+
+	    if (spc < 0)
+		return;
+
+	    string kind = msg.Text.Substring(0, spc);
+	    string arg = msg.Text.Substring(spc + 1,
+		msg.Text.Length - spc - 1);
+
+	    if (kind.Equals("power-sample-us"))
+	    {
+		int period = XmlConvert.ToInt32(arg);
+
+		powerData = new SampleQueue(period, 131072);
+		if (PowerChanged != null)
+		    PowerChanged(this, null);
+	    }
+	    else if (kind.Equals("power-samples"))
+	    {
+		if (powerData != null)
+		{
+		    int[] samples = DecodeSamples(arg);
+
+		    powerData.Push(samples);
+		    if (PowerChanged != null)
+			PowerChanged(this, null);
+		}
+	    }
+	}
+
+	// Decode power sample data into an array of microamp samples.
+	static int[] DecodeSamples(string encoded)
+	{
+	    byte[] raw = Convert.FromBase64String(encoded);
+	    int count = 0;
+
+	    for (int i = 3; i < raw.Length; i += 4)
+		if ((raw[i] & 0x80) == 0)
+		    count++;
+
+	    int[] samples = new int[count];
+
+	    count = 0;
+	    for (int i = 0; i + 3 < raw.Length; i += 4)
+		if ((raw[i + 3] & 0x80) == 0)
+		    samples[count++] =
+			((int)raw[i]) |
+			(((int)raw[i + 1]) << 8) |
+			(((int)raw[i + 2]) << 16) |
+			(((int)raw[i + 3]) << 24);
+
+	    return samples;
 	}
 
 	// The debugger has indicated that it's ready to receive a

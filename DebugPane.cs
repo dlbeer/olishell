@@ -26,13 +26,14 @@ namespace Olishell
 	bool isPaned = true;
 	VBox top = new VBox();
 	VPaned pane = new VPaned();
-	PowerView powerView = new PowerView();
+	PowerView powerView;
 	DebugView debugView;
 	Settings settings;
 
 	public DebugPane(Settings set, DebugManager mgr)
 	{
 	    settings = set;
+	    powerView = new PowerView(mgr);
 	    debugView = new DebugView(set, mgr);
 	    isPaned = settings.PowerGraphVisible;
 	    SetupLayout();

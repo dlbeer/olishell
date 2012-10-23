@@ -80,10 +80,7 @@ namespace Olishell
 
 	void OnDebugOutput(object sender, DebugManager.MessageEventArgs args)
 	{
-	    Debugger.Message msg = args.Message;
-
-	    if (msg.Type != Debugger.MessageType.Shell)
-		log.AddLine(msg.Text);
+	    log.AddLine(args.Message.Text);
 	}
 
 	void OnCommand(object sender, EventArgs args)

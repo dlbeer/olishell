@@ -25,7 +25,7 @@ namespace Olishell
     {
 	ScrolledWindow	scroll = new ScrolledWindow();
 	DrawingArea	drawer = new DrawingArea();
-	SampleQueue	data;
+	DebugManager	debugManager;
 	int		scale = 1;
 	int		vertMax = 10;
 	Gdk.Rectangle	allocation;
@@ -33,14 +33,29 @@ namespace Olishell
 	Gdk.GC		gcBar;
 	Gdk.GC		gcGrid;
 
-	public PowerView()
+	public PowerView(DebugManager mgr)
 	{
+	    debugManager = mgr;
+
 	    drawer.ExposeEvent += OnExpose;
 	    drawer.SizeAllocated += OnSizeAllocate;
 	    drawer.Realized += OnRealize;
 
 	    scroll.AddWithViewport(drawer);
 	    scroll.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+
+	    scroll.Destroyed += OnDestroy;
+	    debugManager.PowerChanged += OnPowerChanged;
+	}
+
+	void OnDestroy(object sender, EventArgs args)
+	{
+	    debugManager.PowerChanged -= OnPowerChanged;
+	}
+
+	void OnPowerChanged(object sender, EventArgs args)
+	{
+	    updateSizing();
 	}
 
 	public Widget View
@@ -58,18 +73,10 @@ namespace Olishell
 	    }
 	}
 
-	public SampleQueue Model
-	{
-	    get { return data; }
-	    set
-	    {
-		data = value;
-		updateSizing();
-	    }
-	}
-
 	void updateSizing()
 	{
+	    SampleQueue data = debugManager.PowerData;
+
 	    vertMax = 10;
 
 	    if (data != null)
@@ -104,6 +111,7 @@ namespace Olishell
 
 	void OnExpose(object sender, ExposeEventArgs args)
 	{
+	    SampleQueue data = debugManager.PowerData;
 	    Gdk.Rectangle rect = args.Event.Area;
 	    Gdk.Window win = drawer.GdkWindow;
 
@@ -130,7 +138,7 @@ namespace Olishell
 	    for (int i = 1; i < 10; i++) {
 		int y = allocation.Height * i / 10;
 
-		win.DrawLine(gcGrid, 0, y, allocation.Width - 1, y);
+		win.DrawLine(gcGrid, rect.X, y, rect.X + rect.Width - 1, y);
 	    }
 	}
     }
