@@ -60,21 +60,34 @@ namespace Olishell
 
 	public static void Main()
 	{
-	    Settings settings = Settings.Load();
-	    DebugManager mgr = new DebugManager(settings);
-
 	    Application.Init();
 
-	    new App(settings, mgr);
+	    try
+	    {
+		Settings settings = Settings.Load();
+		DebugManager mgr = new DebugManager(settings);
 
-	    Application.Run();
+		new App(settings, mgr);
 
-	    // Synchronously terminate the debugger
-	    mgr.Terminate();
-	    while (mgr.IsRunning)
-		Application.RunIteration();
+		Application.Run();
 
-	    settings.Save();
+		// Synchronously terminate the debugger
+		mgr.Terminate();
+		while (mgr.IsRunning)
+		    Application.RunIteration();
+
+		settings.Save();
+	    }
+	    catch (Exception ex)
+	    {
+		MessageDialog dlg = new MessageDialog
+		    (null, DialogFlags.Modal, MessageType.Error,
+		     ButtonsType.Ok, "Unhandled exception: {0}",
+		     ex.Message);
+		dlg.Title = "Olishell";
+
+		dlg.Run();
+	    }
 	}
     }
 }

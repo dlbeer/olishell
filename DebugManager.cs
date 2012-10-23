@@ -92,6 +92,7 @@ namespace Olishell
 		     ButtonsType.Ok, "Can't start debugger: {0}",
 		     ex.Message);
 
+		dlg.Title = "Olishell";
 		dlg.Run();
 		dlg.Hide();
 		return;
