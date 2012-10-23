@@ -29,13 +29,13 @@ namespace Olishell
 	ConsoleLog	log;
 	DebugManager	debugManager;
 
-	public DebugView(DebugManager mgr)
+	public DebugView(Settings set, DebugManager mgr)
 	{
 	    debugManager = mgr;
 	    layout = new Table(2, 2, false);
 	    runStop = new Button("Interrupt");
 	    command = new Entry();
-	    log = new ConsoleLog();
+	    log = new ConsoleLog(set);
 
 	    command.Activated += OnCommand;
 	    runStop.Clicked += OnRunStop;

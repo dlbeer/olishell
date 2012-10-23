@@ -32,8 +32,10 @@ namespace Olishell
 	public bool UseBundledDebugger = true;
 	public string MSPDebugPath = "";
 	public string MSPDebugArgs = "olimex-iso-mk2";
+	public string ConsoleFont = "monospace 10";
 
 	public event EventHandler RefreshLayout;
+	public event EventHandler RefreshFont;
 
 	public Settings() { }
 
@@ -41,6 +43,12 @@ namespace Olishell
 	{
 	    if (RefreshLayout != null)
 		RefreshLayout(this, null);
+	}
+
+	public void RaiseRefreshFont()
+	{
+	    if (RefreshFont != null)
+		RefreshFont(this, null);
 	}
 
 	public void Save()

@@ -32,6 +32,7 @@ namespace Olishell
 	CheckButton		sUseBundledDebugger;
 	Entry			sMSPDebugPath;
 	Entry			sMSPDebugArgs;
+	FontButton		sConsoleFont;
 
 	public PreferencesDialog(Settings set, Window parent)
 	{
@@ -41,7 +42,7 @@ namespace Olishell
 		DialogFlags.Modal | DialogFlags.DestroyWithParent,
 		new object[]{Gtk.Stock.Close, -1});
 
-	    var table = new Table(3, 3, false);
+	    var table = new Table(4, 3, false);
 
 	    sUseBundledDebugger = new CheckButton("Use bundled MSPDebug");
 	    sUseBundledDebugger.Clicked += OnBundledState;
@@ -68,6 +69,14 @@ namespace Olishell
 	    table.Attach(lbl, 0, 1, 2, 3, AttachOptions.Fill, 0, 4, 4);
 	    sMSPDebugArgs = new Entry();
 	    table.Attach(sMSPDebugArgs, 1, 3, 2, 3,
+			 AttachOptions.Expand | AttachOptions.Fill,
+			 0, 4, 4);
+
+	    lbl = new Label("Console font:");
+	    lbl.SetAlignment(0.0f, 0.5f);
+	    table.Attach(lbl, 0, 1, 3, 4, AttachOptions.Fill, 0, 4, 4);
+	    sConsoleFont = new FontButton();
+	    table.Attach(sConsoleFont, 1, 3, 3, 4,
 			 AttachOptions.Expand | AttachOptions.Fill,
 			 0, 4, 4);
 
@@ -104,6 +113,7 @@ namespace Olishell
 	    sUseBundledDebugger.Active = settings.UseBundledDebugger;
 	    sMSPDebugPath.Text = settings.MSPDebugPath;
 	    sMSPDebugArgs.Text = settings.MSPDebugArgs;
+	    sConsoleFont.SetFontName(settings.ConsoleFont);
 
 	    OnBundledState(this, null);
 	}
@@ -113,6 +123,9 @@ namespace Olishell
 	    settings.UseBundledDebugger = sUseBundledDebugger.Active;
 	    settings.MSPDebugPath = sMSPDebugPath.Text;
 	    settings.MSPDebugArgs = sMSPDebugArgs.Text;
+	    settings.ConsoleFont = sConsoleFont.FontName;
+
+	    settings.RaiseRefreshFont();
 	}
 
 	public void Run()

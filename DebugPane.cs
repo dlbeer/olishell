@@ -33,7 +33,7 @@ namespace Olishell
 	public DebugPane(Settings set, DebugManager mgr)
 	{
 	    settings = set;
-	    debugView = new DebugView(mgr);
+	    debugView = new DebugView(set, mgr);
 	    isPaned = settings.PowerGraphVisible;
 	    SetupLayout();
 

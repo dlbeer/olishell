@@ -27,21 +27,21 @@ namespace Olishell
     // text.
     class ConsoleLog
     {
-	private TextView textView;
-	private ScrolledWindow scroller;
-	private TextTag[] tagTab;
+	TextView textView;
+	ScrolledWindow scroller;
+	TextTag[] tagTab;
+	Settings settings;
 
 	public Widget View
 	{
 	    get { return scroller; }
 	}
 
-	public ConsoleLog()
+	public ConsoleLog(Settings set)
 	{
-	    var font = Pango.FontDescription.FromString("monospace");
+	    settings = set;
 
 	    textView = new TextView();
-	    textView.ModifyFont(font);
 	    textView.Editable = false;
 	    textView.CursorVisible = false;
 
@@ -50,6 +50,21 @@ namespace Olishell
 	    scroller.Add(textView);
 
 	    InitTags();
+
+	    settings.RefreshFont += OnRefreshFont;
+	    OnRefreshFont(this, null);
+	}
+
+	void OnRefreshFont(object sender, EventArgs args)
+	{
+	    try
+	    {
+		var font = Pango.FontDescription.FromString
+			(settings.ConsoleFont);
+
+		textView.ModifyFont(font);
+	    }
+	    catch (Exception) { }
 	}
 
 	// Set up tags corresponding to each ANSI foreground state.
