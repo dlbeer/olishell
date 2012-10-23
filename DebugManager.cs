@@ -17,6 +17,8 @@
 // USA
 
 using System;
+using System.Reflection;
+using System.IO;
 using Gtk;
 
 namespace Olishell
@@ -35,6 +37,7 @@ namespace Olishell
 
 	ITC.GtkListener		messageEvent;
 	ITC.GtkListener		readyEvent;
+	Settings		settings;
 	Debugger		debug;
 	bool			isReady = false;
 
@@ -45,7 +48,10 @@ namespace Olishell
 	public event EventHandler DebuggerExited;
 	public event MessageEventHandler MessageReceived;
 
-	public DebugManager() { }
+	public DebugManager(Settings set)
+	{
+	    settings = set;
+	}
 
 	// Do we have a running debugger?
 	public bool IsRunning
@@ -61,13 +67,35 @@ namespace Olishell
 
 	// Start a new debugger process if the debugger is not already
 	// running.
-	public void Start(string path, string args)
+	public void Start()
 	{
 	    if (debug != null)
 		return;
 
+	    string path = settings.MSPDebugPath;
+	    string args = "--embed " + settings.MSPDebugArgs;
+
+	    if (settings.UseBundledDebugger)
+		path = Path.Combine
+		    (Path.GetDirectoryName
+		     (Assembly.GetAssembly(typeof(DebugManager)).CodeBase),
+		     "mspdebug.exe");
+
 	    isReady = false;
-	    debug = new Debugger(path, args);
+	    try {
+		debug = new Debugger(path, args);
+	    }
+	    catch (Exception ex)
+	    {
+		MessageDialog dlg = new MessageDialog
+		    (null, DialogFlags.Modal, MessageType.Error,
+		     ButtonsType.Ok, "Can't start debugger: {0}",
+		     ex.Message);
+
+		dlg.Run();
+		dlg.Hide();
+		return;
+	    }
 
 	    messageEvent = new ITC.GtkListener(debug.Output);
 	    messageEvent.Signalled += OnMessage;

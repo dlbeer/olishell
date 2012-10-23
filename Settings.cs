@@ -58,9 +58,9 @@ namespace Olishell
 
 	static string DocumentPath()
 	{
-	    return Environment.GetFolderPath
-		(Environment.SpecialFolder.ApplicationData) +
-		    "/olishell-settings.xml";
+	    return Path.Combine(Environment.GetFolderPath
+		(Environment.SpecialFolder.ApplicationData),
+		    "olishell-settings.xml");
 	}
     }
 }

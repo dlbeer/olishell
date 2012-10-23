@@ -88,13 +88,13 @@ namespace Olishell
 
 	public static void Main()
 	{
-	    DebugManager mgr = new DebugManager();
 	    Settings settings = Settings.Load();
+	    DebugManager mgr = new DebugManager(settings);
 
 	    Application.Init();
 
 	    new App(settings, mgr);
-	    mgr.Start("/usr/local/bin/mspdebug", "--embed sim");
+	    mgr.Start();
 
 	    Application.Run();
 
