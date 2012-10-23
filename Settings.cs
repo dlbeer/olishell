@@ -28,6 +28,10 @@ namespace Olishell
 	public int WindowWidth = 700;
 	public int WindowHeight = 500;
 
+	public bool UseBundledDebugger = true;
+	public string MSPDebugPath = "";
+	public string MSPDebugArgs = "olimex-iso-mk2";
+
 	public Settings() { }
 
 	public void Save()

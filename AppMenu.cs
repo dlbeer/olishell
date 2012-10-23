@@ -23,15 +23,19 @@ namespace Olishell
 {
     class AppMenu
     {
-	MenuBar		menuBar;
-	DebugManager	debugManager;
+	MenuBar			menuBar;
+	DebugManager		debugManager;
+	PreferencesDialog	preferences;
 
-	public AppMenu(DebugManager mgr, AccelGroup agr)
+	public AppMenu(DebugManager mgr, AccelGroup agr,
+		       Settings set, Window parent)
 	{
 	    debugManager = mgr;
 	    menuBar = new MenuBar();
+	    preferences = new PreferencesDialog(set, parent);
 
 	    menuBar.Append(CreateFileMenu(agr));
+	    menuBar.Append(CreateEditMenu(agr));
 	    menuBar.Append(CreateDebuggerMenu(agr));
 	    menuBar.Append(CreateHelpMenu(agr));
 	}
@@ -53,6 +57,20 @@ namespace Olishell
 	    fileMenu.Append(quit);
 
 	    return file;
+	}
+
+	// Create "Edit" menu
+	MenuItem CreateEditMenu(AccelGroup agr)
+	{
+	    MenuItem edit = new MenuItem("_Edit");
+	    Menu editMenu = new Menu();
+	    edit.Submenu = editMenu;
+
+	    MenuItem prefs = new ImageMenuItem(Stock.Preferences, agr);
+	    prefs.Activated += (obj, evt) => preferences.Run();
+	    editMenu.Append(prefs);
+
+	    return edit;
 	}
 
 	// Create "Debugger" menu

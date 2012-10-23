@@ -10,7 +10,8 @@ SOURCE = \
     PowerView.cs \
     DebugManager.cs \
     AppMenu.cs \
-    Settings.cs
+    Settings.cs \
+    PreferencesDialog.cs
 
 olishell.exe: $(SOURCE)
 	$(CSC) -pkg:gtk-sharp-2.0 -out:$@ $(SOURCE)
