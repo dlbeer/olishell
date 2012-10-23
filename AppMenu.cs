@@ -27,6 +27,11 @@ namespace Olishell
 	DebugManager		debugManager;
 	PreferencesDialog	preferences;
 
+	// Debugger menu items
+	MenuItem		debuggerStart;
+	MenuItem		debuggerStop;
+	MenuItem		debuggerInterrupt;
+
 	public AppMenu(DebugManager mgr, AccelGroup agr,
 		       Settings set, Window parent)
 	{
@@ -38,11 +43,53 @@ namespace Olishell
 	    menuBar.Append(CreateEditMenu(agr));
 	    menuBar.Append(CreateDebuggerMenu(agr));
 	    menuBar.Append(CreateHelpMenu(agr));
+
+	    debugManager.DebuggerBusy += OnDebuggerBusy;
+	    debugManager.DebuggerReady += OnDebuggerReady;
+	    debugManager.DebuggerStarted += OnDebuggerStarted;
+	    debugManager.DebuggerExited += OnDebuggerExited;
+
+	    menuBar.Destroyed += OnDestroy;
+
+	    debuggerStop.Sensitive = false;
+	    debuggerInterrupt.Sensitive = false;
 	}
 
 	public Widget View
 	{
 	    get { return menuBar; }
+	}
+
+	void OnDestroy(object sender, EventArgs args)
+	{
+	    debugManager.DebuggerBusy -= OnDebuggerBusy;
+	    debugManager.DebuggerReady -= OnDebuggerReady;
+	    debugManager.DebuggerStarted -= OnDebuggerStarted;
+	    debugManager.DebuggerExited -= OnDebuggerExited;
+	}
+
+	void OnDebuggerBusy(object sender, EventArgs args)
+	{
+	    debuggerInterrupt.Sensitive = true;
+	}
+
+	void OnDebuggerReady(object sender, EventArgs args)
+	{
+	    debuggerInterrupt.Sensitive = false;
+	}
+
+	void OnDebuggerStarted(object sender, EventArgs args)
+	{
+	    debuggerStart.Sensitive = false;
+	    debuggerStop.Sensitive = true;
+	    debuggerInterrupt.Sensitive = true;
+	}
+
+	void OnDebuggerExited(object sender, EventArgs args)
+	{
+	    debuggerStart.Sensitive = true;
+	    debuggerStop.Sensitive = false;
+	    debuggerInterrupt.Sensitive = false;
 	}
 
 	// Create "File" menu
@@ -80,19 +127,39 @@ namespace Olishell
 	    Menu dbgMenu = new Menu();
 	    dbg.Submenu = dbgMenu;
 
-	    MenuItem intr = new ImageMenuItem(Stock.Cancel, agr);
-	    ((Label)intr.Children[0]).Text = "Interrupt";
-	    intr.AddAccelerator("activate", agr,
+	    debuggerStart = new MenuItem("_Start");
+	    debuggerStart.Activated += OnDebuggerStart;
+	    dbgMenu.Append(debuggerStart);
+
+	    debuggerStop = new MenuItem("_Stop");
+	    debuggerStop.Activated += OnDebuggerStop;
+	    dbgMenu.Append(debuggerStop);
+
+	    debuggerInterrupt = new ImageMenuItem(Stock.Cancel, agr);
+	    ((Label)debuggerInterrupt.Children[0]).Text = "Interrupt";
+	    debuggerInterrupt.AddAccelerator("activate", agr,
 		new AccelKey(Gdk.Key.F9, Gdk.ModifierType.None,
 		AccelFlags.Visible));
-	    intr.Activated += OnDebuggerStop;
-	    dbgMenu.Append(intr);
+	    debuggerInterrupt.Activated += OnDebuggerInterrupt;
+	    dbgMenu.Append(debuggerInterrupt);
 
 	    return dbg;
 	}
 
+	// Debugger -> Start
+	void OnDebuggerStart(object sender, EventArgs args)
+	{
+	    debugManager.Start();
+	}
+
 	// Debugger -> Stop
 	void OnDebuggerStop(object sender, EventArgs args)
+	{
+	    debugManager.Terminate();
+	}
+
+	// Debugger -> Stop
+	void OnDebuggerInterrupt(object sender, EventArgs args)
 	{
 	    debugManager.SendInterrupt();
 	}

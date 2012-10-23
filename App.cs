@@ -94,7 +94,6 @@ namespace Olishell
 	    Application.Init();
 
 	    new App(settings, mgr);
-	    mgr.Start();
 
 	    Application.Run();
 
