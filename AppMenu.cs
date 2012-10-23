@@ -23,9 +23,14 @@ namespace Olishell
 {
     class AppMenu
     {
+	Settings		settings;
+
 	MenuBar			menuBar;
 	DebugManager		debugManager;
 	PreferencesDialog	preferences;
+
+	// View: power graph visible
+	CheckMenuItem		powerVisible;
 
 	// Debugger menu items
 	MenuItem		debuggerStart;
@@ -35,12 +40,14 @@ namespace Olishell
 	public AppMenu(DebugManager mgr, AccelGroup agr,
 		       Settings set, Window parent)
 	{
+	    settings = set;
 	    debugManager = mgr;
 	    menuBar = new MenuBar();
 	    preferences = new PreferencesDialog(set, parent);
 
 	    menuBar.Append(CreateFileMenu(agr));
 	    menuBar.Append(CreateEditMenu(agr));
+	    menuBar.Append(CreateViewMenu(agr));
 	    menuBar.Append(CreateDebuggerMenu(agr));
 	    menuBar.Append(CreateHelpMenu(agr));
 
@@ -118,6 +125,28 @@ namespace Olishell
 	    editMenu.Append(prefs);
 
 	    return edit;
+	}
+
+	// Create "View" menu
+	MenuItem CreateViewMenu(AccelGroup agr)
+	{
+	    MenuItem view = new MenuItem("_View");
+	    Menu viewMenu = new Menu();
+	    view.Submenu = viewMenu;
+
+	    powerVisible = new CheckMenuItem("Show power _graph");
+	    powerVisible.Active = settings.PowerGraphVisible;
+	    powerVisible.Activated += OnShowPowerGraph;
+	    viewMenu.Append(powerVisible);
+
+	    return view;
+	}
+
+	// View -> Show power graph
+	void OnShowPowerGraph(object sender, EventArgs args)
+	{
+	    settings.PowerGraphVisible = powerVisible.Active;
+	    settings.RaiseRefreshLayout();
 	}
 
 	// Create "Debugger" menu

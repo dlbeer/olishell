@@ -24,6 +24,7 @@ namespace Olishell
 {
     public class Settings
     {
+	public bool PowerGraphVisible = true;
 	public int SizerPosition = 200;
 	public int WindowWidth = 700;
 	public int WindowHeight = 500;
@@ -32,7 +33,15 @@ namespace Olishell
 	public string MSPDebugPath = "";
 	public string MSPDebugArgs = "olimex-iso-mk2";
 
+	public event EventHandler RefreshLayout;
+
 	public Settings() { }
+
+	public void RaiseRefreshLayout()
+	{
+	    if (RefreshLayout != null)
+		RefreshLayout(this, null);
+	}
 
 	public void Save()
 	{

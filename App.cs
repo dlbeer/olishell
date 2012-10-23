@@ -24,17 +24,16 @@ namespace Olishell
     class App
     {
 	Window mainWin = new Window("Olishell");
-	DebugView debugView;
-	PowerView powerView = new PowerView();
-	VPaned pane = new VPaned();
 	AppMenu menu;
+	DebugPane debugPane;
 	Settings settings;
 
 	public App(Settings set, DebugManager mgr)
 	{
 	    settings = set;
+	    debugPane = new DebugPane(set, mgr);
+
 	    AccelGroup agr = new AccelGroup();
-	    debugView = new DebugView(mgr);
 	    menu = new AppMenu(mgr, agr, set, mainWin);
 
 	    VBox vb = new VBox(false, 3);
@@ -43,47 +42,20 @@ namespace Olishell
 	    mainWin.DeleteEvent += (obj, evt) => Application.Quit();
 	    mainWin.AddAccelGroup(agr);
 
-	    pane.Add(powerView.View);
-	    pane.Add(debugView.View);
-	    pane.Position = settings.SizerPosition;
-
 	    vb.PackStart(menu.View, false, false, 0);
-	    vb.PackEnd(pane, true, true, 0);
+	    vb.PackEnd(debugPane.View, true, true, 0);
 	    mainWin.Add(vb);
 
 	    mainWin.DeleteEvent += OnDeleteEvent;
 	    mainWin.ShowAll();
-
-	    Test();
 	}
 
 	void OnDeleteEvent(object sender, EventArgs args)
 	{
-	    settings.SizerPosition = pane.Position;
+	    debugPane.SaveLayout();
 	    mainWin.GetSize(out settings.WindowWidth,
 			    out settings.WindowHeight);
 	    Application.Quit();
-	}
-
-	void Test()
-	{
-	    // FIXME: testing
-	    SampleQueue sq = new SampleQueue(55, 2048);
-	    int i;
-	    int[] chunk = new int[512];
-
-	    for (i = 1; i < chunk.Length / 2; i++)
-	    {
-		chunk[i] = 3000 + (i * 327 + i * 45) % 300;
-		chunk[i + chunk.Length / 2] =
-		    5000 + (i * 327 + i * 45) % 300;
-	    }
-
-	    sq.Push(chunk);
-	    sq.Push(chunk);
-	    sq.Push(chunk);
-	    sq.Push(chunk);
-	    powerView.Model = sq;
 	}
 
 	public static void Main()
