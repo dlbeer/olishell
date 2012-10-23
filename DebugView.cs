@@ -51,6 +51,8 @@ namespace Olishell
 	    layout.Attach(runStop, 1, 2, 1, 2,
 			  AttachOptions.Fill, AttachOptions.Fill, 4, 4);
 
+	    runStop.SetSizeRequest(80, -1);
+
 	    command.Sensitive = false;
 	    runStop.Sensitive = false;
 
