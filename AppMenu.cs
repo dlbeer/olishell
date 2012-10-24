@@ -116,6 +116,8 @@ namespace Olishell
 	    save.Activated += OnSaveTranscript;
 	    fileMenu.Append(save);
 
+	    fileMenu.Append(new SeparatorMenuItem());
+
 	    MenuItem quit = new ImageMenuItem(Stock.Quit, agr);
 	    quit.Activated += (obj, evt) => Application.Quit();
 	    fileMenu.Append(quit);
@@ -216,6 +218,8 @@ namespace Olishell
 	    clearPower.Activated += (obj, evt) => debugManager.ClearPower();
 	    editMenu.Append(clearPower);
 
+	    editMenu.Append(new SeparatorMenuItem());
+
 	    MenuItem prefs = new ImageMenuItem(Stock.Preferences, agr);
 	    prefs.Activated += (obj, evt) => preferences.Run();
 	    editMenu.Append(prefs);
@@ -233,6 +237,9 @@ namespace Olishell
 	    powerVisible = new CheckMenuItem("Show power _graph");
 	    powerVisible.Active = settings.PowerGraphVisible;
 	    powerVisible.Activated += OnShowPowerGraph;
+	    powerVisible.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.F3, Gdk.ModifierType.None,
+		AccelFlags.Visible));
 	    viewMenu.Append(powerVisible);
 
 	    viewMenu.Append(new SeparatorMenuItem());
@@ -276,10 +283,16 @@ namespace Olishell
 
 	    debuggerStart = new MenuItem("_Start");
 	    debuggerStart.Activated += OnDebuggerStart;
+	    debuggerStart.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.F5, Gdk.ModifierType.None,
+		AccelFlags.Visible));
 	    dbgMenu.Append(debuggerStart);
 
 	    debuggerStop = new MenuItem("_Stop");
 	    debuggerStop.Activated += OnDebuggerStop;
+	    debuggerStop.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.F6, Gdk.ModifierType.None,
+		AccelFlags.Visible));
 	    dbgMenu.Append(debuggerStop);
 
 	    debuggerInterrupt = new ImageMenuItem(Stock.Cancel, agr);

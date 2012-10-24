@@ -87,6 +87,8 @@ namespace Olishell
 		dlg.Title = "Olishell";
 
 		dlg.Run();
+
+		throw ex;
 	    }
 	}
     }
