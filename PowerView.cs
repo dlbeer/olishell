@@ -30,6 +30,7 @@ namespace Olishell
 	int		vertMax = 10;
 	int		hSpacingUs = 1;
 	Gdk.Rectangle	allocation;
+	Gdk.Rectangle	scrollAllocation;
 	uint		timerID;
 
 	Gdk.GC		gcBar;
@@ -48,6 +49,7 @@ namespace Olishell
 
 	    scroll.AddWithViewport(drawer);
 	    scroll.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+	    scroll.SizeAllocated += OnScrollSizeAllocate;
 
 	    scroll.Destroyed += OnDestroy;
 	    debugManager.PowerChanged += OnPowerChanged;
@@ -82,14 +84,47 @@ namespace Olishell
 	    get { return scroll; }
 	}
 
-	public int Scale
+	public void ZoomIn()
 	{
-	    get { return scale; }
-	    set
+	    if (scale > 1)
 	    {
-		scale = value;
+		scale /= 2;
 		updateSizing();
 	    }
+	}
+
+	public void ZoomOut()
+	{
+	    if (scale < 65536)
+	    {
+		scale *= 2;
+		updateSizing();
+	    }
+	}
+
+	public void ZoomFit()
+	{
+	    SampleQueue data = debugManager.PowerData;
+
+	    if (data == null)
+	    {
+		scale = 1;
+	    }
+	    else
+	    {
+		scale = 1;
+		while ((scale < 65536) &&
+		       (scrollAllocation.Width * scale) < data.Count)
+		    scale *= 2;
+	    }
+
+	    updateSizing();
+	}
+
+	public void ZoomFull()
+	{
+	    scale = 1;
+	    updateSizing();
 	}
 
 	void updateSizing()
@@ -120,6 +155,11 @@ namespace Olishell
 	void OnSizeAllocate(object sender, SizeAllocatedArgs args)
 	{
 	    allocation = args.Allocation;
+	}
+
+	void OnScrollSizeAllocate(object sender, SizeAllocatedArgs args)
+	{
+	    scrollAllocation = args.Allocation;
 	}
 
 	void OnRealize(object sender, EventArgs args)

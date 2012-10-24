@@ -170,7 +170,7 @@ namespace Olishell
 		using (Stream s = File.Create(filename))
 		    using (StreamWriter sw = new StreamWriter(s,
 				Encoding.UTF8))
-			sw.Write(debugPane.Transcript);
+			sw.Write(debugPane.DebugView.Transcript);
 	    }
 	    catch (Exception ex)
 	    {
@@ -196,16 +196,19 @@ namespace Olishell
 	    edit.Submenu = editMenu;
 
 	    MenuItem copy = new ImageMenuItem(Stock.Copy, agr);
-	    copy.Activated += (obj, evt) => debugPane.CopyText();
+	    copy.Activated += (obj, evt) =>
+		debugPane.DebugView.CopyText();
 	    editMenu.Append(copy);
 
 	    MenuItem selectAll = new ImageMenuItem(Stock.SelectAll, agr);
-	    selectAll.Activated += (obj, evt) => debugPane.SelectAll();
+	    selectAll.Activated += (obj, evt) =>
+		debugPane.DebugView.SelectAll();
 	    editMenu.Append(selectAll);
 
 	    MenuItem clear = new ImageMenuItem(Stock.Clear, agr);
 	    ((Label)clear.Children[0]).Text = "Clear transcript";
-	    clear.Activated += (obj, evt) => debugPane.ClearText();
+	    clear.Activated += (obj, evt) =>
+		debugPane.DebugView.ClearText();
 	    editMenu.Append(clear);
 
 	    MenuItem prefs = new ImageMenuItem(Stock.Preferences, agr);
@@ -226,6 +229,28 @@ namespace Olishell
 	    powerVisible.Active = settings.PowerGraphVisible;
 	    powerVisible.Activated += OnShowPowerGraph;
 	    viewMenu.Append(powerVisible);
+
+	    viewMenu.Append(new SeparatorMenuItem());
+
+	    MenuItem zoomIn = new ImageMenuItem(Stock.ZoomIn, agr);
+	    zoomIn.Activated += (obj, evt) =>
+		debugPane.PowerView.ZoomIn();
+	    viewMenu.Append(zoomIn);
+
+	    MenuItem zoomOut = new ImageMenuItem(Stock.ZoomOut, agr);
+	    zoomOut.Activated += (obj, evt) =>
+		debugPane.PowerView.ZoomOut();
+	    viewMenu.Append(zoomOut);
+
+	    MenuItem zoomFit = new ImageMenuItem(Stock.ZoomFit, agr);
+	    zoomFit.Activated += (obj, evt) =>
+		debugPane.PowerView.ZoomFit();
+	    viewMenu.Append(zoomFit);
+
+	    MenuItem zoomFull = new ImageMenuItem(Stock.Zoom100, agr);
+	    zoomFull.Activated += (obj, evt) =>
+		debugPane.PowerView.ZoomFull();
+	    viewMenu.Append(zoomFull);
 
 	    return view;
 	}

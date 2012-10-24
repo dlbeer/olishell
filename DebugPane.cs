@@ -46,11 +46,26 @@ namespace Olishell
 	    get { return top; }
 	}
 
+	public PowerView PowerView
+	{
+	    get { return powerView; }
+	}
+
+	public DebugView DebugView
+	{
+	    get { return debugView; }
+	}
+
 	void OnRefreshLayout(object sender, EventArgs args)
 	{
 	    TeardownLayout();
 	    isPaned = settings.PowerGraphVisible;
 	    SetupLayout();
+	}
+
+	public void SaveLayout()
+	{
+	    settings.SizerPosition = pane.Position;
 	}
 
 	void TeardownLayout()
@@ -84,31 +99,6 @@ namespace Olishell
 	    }
 
 	    top.ShowAll();
-	}
-
-	public void SaveLayout()
-	{
-	    settings.SizerPosition = pane.Position;
-	}
-
-	public void SelectAll()
-	{
-	    debugView.SelectAll();
-	}
-
-	public void CopyText()
-	{
-	    debugView.CopyText();
-	}
-
-	public void ClearText()
-	{
-	    debugView.ClearText();
-	}
-
-	public string Transcript
-	{
-	    get { return debugView.Transcript; }
 	}
     }
 }
