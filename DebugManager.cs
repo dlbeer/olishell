@@ -62,6 +62,17 @@ namespace Olishell
 	    get { return powerData; }
 	}
 
+	// Clear power graph
+	public void ClearPower()
+	{
+	    if (powerData != null)
+	    {
+		powerData.Clear();
+		if (PowerChanged != null)
+		    PowerChanged(this, null);
+	    }
+	}
+
 	// Do we have a running debugger?
 	public bool IsRunning
 	{

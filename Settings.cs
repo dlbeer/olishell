@@ -25,6 +25,7 @@ namespace Olishell
     public class Settings
     {
 	public bool PowerGraphVisible = true;
+	public int PowerViewScale = 128;
 	public int SizerPosition = 200;
 	public int WindowWidth = 700;
 	public int WindowHeight = 500;

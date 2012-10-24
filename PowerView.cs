@@ -26,22 +26,27 @@ namespace Olishell
 	ScrolledWindow	scroll = new ScrolledWindow();
 	DrawingArea	drawer = new DrawingArea();
 	DebugManager	debugManager;
-	int		scale = 1;
+	int		scale = 128;
 	int		vertMax = 10;
 	int		hSpacingUs = 1;
 	Gdk.Rectangle	allocation;
 	Gdk.Rectangle	scrollAllocation;
 	uint		timerID;
+	Settings	settings;
 
 	Gdk.GC		gcBar;
 	Gdk.GC		gcGrid;
 
 	// Periodicity of the gcGrid dotted line pattern
 	const int	dotsPeriod = 6;
+	const int	maxScale = 65536;
 
-	public PowerView(DebugManager mgr)
+	public PowerView(Settings set, DebugManager mgr)
 	{
+	    settings = set;
 	    debugManager = mgr;
+
+	    scale = FixScale(settings.PowerViewScale);
 
 	    drawer.ExposeEvent += OnExpose;
 	    drawer.SizeAllocated += OnSizeAllocate;
@@ -53,6 +58,21 @@ namespace Olishell
 
 	    scroll.Destroyed += OnDestroy;
 	    debugManager.PowerChanged += OnPowerChanged;
+	}
+
+	static int FixScale(int target)
+	{
+	    int s = 1;
+
+	    while ((s < target) && (s < maxScale))
+		s *= 2;
+
+	    return s;
+	}
+
+	public void SaveLayout()
+	{
+	    settings.PowerViewScale = scale;
 	}
 
 	void OnDestroy(object sender, EventArgs args)
@@ -95,7 +115,7 @@ namespace Olishell
 
 	public void ZoomOut()
 	{
-	    if (scale < 65536)
+	    if (scale < maxScale)
 	    {
 		scale *= 2;
 		updateSizing();
@@ -113,7 +133,7 @@ namespace Olishell
 	    else
 	    {
 		scale = 1;
-		while ((scale < 65536) &&
+		while ((scale < maxScale) &&
 		       (scrollAllocation.Width * scale) < data.Count)
 		    scale *= 2;
 	    }

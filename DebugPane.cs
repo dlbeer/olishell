@@ -33,7 +33,7 @@ namespace Olishell
 	public DebugPane(Settings set, DebugManager mgr)
 	{
 	    settings = set;
-	    powerView = new PowerView(mgr);
+	    powerView = new PowerView(set, mgr);
 	    debugView = new DebugView(set, mgr);
 	    isPaned = settings.PowerGraphVisible;
 	    SetupLayout();
@@ -66,6 +66,7 @@ namespace Olishell
 	public void SaveLayout()
 	{
 	    settings.SizerPosition = pane.Position;
+	    powerView.SaveLayout();
 	}
 
 	void TeardownLayout()

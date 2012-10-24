@@ -211,6 +211,11 @@ namespace Olishell
 		debugPane.DebugView.ClearText();
 	    editMenu.Append(clear);
 
+	    MenuItem clearPower = new ImageMenuItem(Stock.Clear, agr);
+	    ((Label)clearPower.Children[0]).Text = "Clear power graph";
+	    clearPower.Activated += (obj, evt) => debugManager.ClearPower();
+	    editMenu.Append(clearPower);
+
 	    MenuItem prefs = new ImageMenuItem(Stock.Preferences, agr);
 	    prefs.Activated += (obj, evt) => preferences.Run();
 	    editMenu.Append(prefs);
