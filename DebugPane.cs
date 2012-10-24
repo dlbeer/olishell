@@ -61,6 +61,11 @@ namespace Olishell
 	    TeardownLayout();
 	    isPaned = settings.PowerGraphVisible;
 	    SetupLayout();
+
+	    GLib.Idle.Add(() => {
+		debugView.Rescroll();
+		return false;
+	    });
 	}
 
 	public void SaveLayout()

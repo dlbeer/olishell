@@ -55,6 +55,13 @@ namespace Olishell
 	    OnRefreshFont(this, null);
 	}
 
+	public void Rescroll()
+	{
+	    TextBuffer buf = textView.Buffer;
+
+	    textView.ScrollToMark(buf.InsertMark, 0.0, true, 0.0, 1.0);
+	}
+
 	void OnRefreshFont(object sender, EventArgs args)
 	{
 	    try
@@ -131,7 +138,7 @@ namespace Olishell
 	    }
 
 	    buf.Insert(ref iter, "\n");
-	    textView.ScrollMarkOnscreen(buf.InsertMark);
+	    Rescroll();
 	}
 
 	// Given a string containing an ANSI code at the given offset,

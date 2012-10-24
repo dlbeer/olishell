@@ -151,5 +151,10 @@ namespace Olishell
 	{
 	    get { return log.Transcript; }
 	}
+
+	public void Rescroll()
+	{
+	    log.Rescroll();
+	}
     }
 }
