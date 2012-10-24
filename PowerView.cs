@@ -28,11 +28,15 @@ namespace Olishell
 	DebugManager	debugManager;
 	int		scale = 1;
 	int		vertMax = 10;
+	int		hSpacingUs = 1;
 	Gdk.Rectangle	allocation;
 	uint		timerID;
 
 	Gdk.GC		gcBar;
 	Gdk.GC		gcGrid;
+
+	// Periodicity of the gcGrid dotted line pattern
+	const int	dotsPeriod = 6;
 
 	public PowerView(DebugManager mgr)
 	{
@@ -98,8 +102,16 @@ namespace Olishell
 	    {
 		drawer.SetSizeRequest(data.Count / scale, -1);
 
+		// Calculate a scale for the vertical axis.
 		while (vertMax < data.Max)
 		    vertMax *= 10;
+
+		// Calculate a good time-division spacing
+		int usPerPx = scale * data.Period;
+
+		hSpacingUs = 1;
+		while (hSpacingUs / usPerPx < 20)
+		    hSpacingUs *= 10;
 	    }
 
 	    drawer.QueueResize();
@@ -126,34 +138,81 @@ namespace Olishell
 
 	void OnExpose(object sender, ExposeEventArgs args)
 	{
-	    SampleQueue data = debugManager.PowerData;
 	    Gdk.Rectangle rect = args.Event.Area;
 	    Gdk.Window win = drawer.GdkWindow;
 
 	    win.DrawRectangle(drawer.Style.BlackGC, true,
 			      rect.X, 0, rect.Width, allocation.Height);
 
-	    if (data != null)
+	    DrawPower(win, rect);
+	    DrawHorizontalGrid(win, rect);
+	    DrawVerticalGrid(win, rect);
+	}
+
+	// Redraw power samples for the exposed area.
+	void DrawPower(Gdk.Window win, Gdk.Rectangle rect)
+	{
+	    SampleQueue data = debugManager.PowerData;
+
+	    if (data == null)
+		return;
+
+	    int[] slice = new int[rect.Width];
+	    int len;
+
+	    len = data.Fetch(rect.X * scale, slice, scale);
+
+	    for (int i = 0; i < len; i++)
 	    {
-		int[] slice = new int[rect.Width];
-		int len;
+		int x = rect.X + i;
+		int h = slice[i] * allocation.Height / vertMax;
 
-		len = data.Fetch(rect.X * scale, slice, scale);
-
-		for (int i = 0; i < len; i++)
-		{
-		    int x = rect.X + i;
-		    int h = slice[i] * allocation.Height / vertMax;
-
-		    win.DrawLine(gcBar, x, allocation.Height - 1 - h,
-				 x, allocation.Height - 1);
-		}
+		win.DrawLine(gcBar, x, allocation.Height - 1 - h,
+			     x, allocation.Height - 1);
 	    }
+	}
+
+	// Redraw horizontal gridlines for the exposed area.
+	void DrawHorizontalGrid(Gdk.Window win, Gdk.Rectangle rect)
+	{
+	    int x1 = rect.X;
+	    int x2 = rect.X + rect.Width - 1;
+
+	    // Align the horizontal region so the dotted pattern always
+	    // appears continuous.
+	    x1 -= x1 % dotsPeriod;
+	    x2 += dotsPeriod - (x2 % dotsPeriod);
 
 	    for (int i = 1; i < 10; i++) {
 		int y = allocation.Height * i / 10;
 
-		win.DrawLine(gcGrid, rect.X, y, rect.X + rect.Width - 1, y);
+		win.DrawLine(gcGrid, x1, y, x2, y);
+	    }
+	}
+
+	// Redraw vertical gridlines for the exposed area.
+	void DrawVerticalGrid(Gdk.Window win, Gdk.Rectangle rect)
+	{
+	    SampleQueue data = debugManager.PowerData;
+
+	    if (data == null)
+		return;
+
+	    int usPerPx = scale * data.Period;
+	    int t = rect.X * usPerPx;
+
+	    // Find the first time divison before the exposed area
+	    t -= t % hSpacingUs;
+
+	    for (;;)
+	    {
+		int x = t / usPerPx;
+
+		if (x >= rect.X + rect.Width)
+		    break;
+
+		win.DrawLine(gcGrid, x, 0, x, allocation.Height - 1);
+		t += hSpacingUs;
 	    }
 	}
     }
