@@ -247,21 +247,33 @@ namespace Olishell
 	    MenuItem zoomIn = new ImageMenuItem(Stock.ZoomIn, agr);
 	    zoomIn.Activated += (obj, evt) =>
 		debugPane.PowerView.ZoomIn();
+	    zoomIn.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.plus, Gdk.ModifierType.ControlMask,
+		AccelFlags.Visible));
 	    viewMenu.Append(zoomIn);
 
 	    MenuItem zoomOut = new ImageMenuItem(Stock.ZoomOut, agr);
 	    zoomOut.Activated += (obj, evt) =>
 		debugPane.PowerView.ZoomOut();
+	    zoomOut.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.minus, Gdk.ModifierType.ControlMask,
+		AccelFlags.Visible));
 	    viewMenu.Append(zoomOut);
 
 	    MenuItem zoomFit = new ImageMenuItem(Stock.ZoomFit, agr);
 	    zoomFit.Activated += (obj, evt) =>
 		debugPane.PowerView.ZoomFit();
+	    zoomFit.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.Key_0, Gdk.ModifierType.ControlMask,
+		AccelFlags.Visible));
 	    viewMenu.Append(zoomFit);
 
 	    MenuItem zoomFull = new ImageMenuItem(Stock.Zoom100, agr);
 	    zoomFull.Activated += (obj, evt) =>
 		debugPane.PowerView.ZoomFull();
+	    zoomFull.AddAccelerator("activate", agr,
+		new AccelKey(Gdk.Key.Key_1, Gdk.ModifierType.ControlMask,
+		AccelFlags.Visible));
 	    viewMenu.Append(zoomFull);
 
 	    return view;
@@ -281,14 +293,14 @@ namespace Olishell
 	    Menu dbgMenu = new Menu();
 	    dbg.Submenu = dbgMenu;
 
-	    debuggerStart = new MenuItem("_Start");
+	    debuggerStart = new MenuItem("_Start debugger");
 	    debuggerStart.Activated += OnDebuggerStart;
 	    debuggerStart.AddAccelerator("activate", agr,
 		new AccelKey(Gdk.Key.F5, Gdk.ModifierType.None,
 		AccelFlags.Visible));
 	    dbgMenu.Append(debuggerStart);
 
-	    debuggerStop = new MenuItem("_Stop");
+	    debuggerStop = new MenuItem("_Stop debugger");
 	    debuggerStop.Activated += OnDebuggerStop;
 	    debuggerStop.AddAccelerator("activate", agr,
 		new AccelKey(Gdk.Key.F6, Gdk.ModifierType.None,
@@ -296,7 +308,7 @@ namespace Olishell
 	    dbgMenu.Append(debuggerStop);
 
 	    debuggerInterrupt = new ImageMenuItem(Stock.Cancel, agr);
-	    ((Label)debuggerInterrupt.Children[0]).Text = "Interrupt";
+	    ((Label)debuggerInterrupt.Children[0]).Text = "Interrupt execution";
 	    debuggerInterrupt.AddAccelerator("activate", agr,
 		new AccelKey(Gdk.Key.F9, Gdk.ModifierType.None,
 		AccelFlags.Visible));
