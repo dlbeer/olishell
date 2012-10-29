@@ -94,7 +94,7 @@ namespace Olishell
 	    if (nl >= 0)
 		text = text.Substring(0, nl);
 
-	    log.AddLine("==> " + text);
+	    log.AddLine("\x1b[1m==>\x1b[0m " + text);
 	    debugManager.SendCommand(text);
 	}
 
@@ -111,12 +111,14 @@ namespace Olishell
 	    runStop.Label = "Interrupt";
 	    command.Sensitive = false;
 	    runStop.Sensitive = true;
+	    log.AddLine("\x1b[1mDebugger started\x1b[0m");
 	}
 
 	void OnExited(object sender, EventArgs args)
 	{
 	    runStop.Sensitive = false;
 	    command.Sensitive = false;
+	    log.AddLine("\x1b[1mDebugger exited\x1b[0m");
 	}
 
 	void OnBusy(object sender, EventArgs args)
