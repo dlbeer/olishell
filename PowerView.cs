@@ -23,6 +23,9 @@ namespace Olishell
 {
     class PowerView
     {
+	VBox		layout = new VBox(false, 0);
+	Label		status = new Label();
+
 	ScrolledWindow	scroll = new ScrolledWindow();
 	DrawingArea	drawer = new DrawingArea();
 	DebugManager	debugManager;
@@ -58,6 +61,12 @@ namespace Olishell
 
 	    scroll.Destroyed += OnDestroy;
 	    debugManager.PowerChanged += OnPowerChanged;
+
+	    layout.PackStart(scroll, true, true, 0);
+	    layout.PackEnd(status, false, true, 0);
+	    status.SetAlignment(0.0f, 0.5f);
+
+	    updateStatus();
 	}
 
 	static int FixScale(int target)
@@ -73,6 +82,26 @@ namespace Olishell
 	public void SaveLayout()
 	{
 	    settings.PowerViewScale = scale;
+	}
+
+	static string prefixMicro(int qty)
+	{
+	    if (qty < 1000)
+		return string.Format("{0} u", qty);
+	    if (qty < 1000000)
+		return string.Format("{0} m", qty / 1000);
+	    if (qty < 1000000000)
+		return string.Format("{0} ", qty / 1000000);
+
+	    return string.Format("{0} k", qty / 1000000000);
+	}
+
+	void updateStatus()
+	{
+	    status.Text =
+		string.Format("X: {0}s/div, Y: {1}A/div",
+			      prefixMicro(hSpacingUs),
+			      prefixMicro(vertMax / 10));
 	}
 
 	void OnDestroy(object sender, EventArgs args)
@@ -101,7 +130,7 @@ namespace Olishell
 
 	public Widget View
 	{
-	    get { return scroll; }
+	    get { return layout; }
 	}
 
 	public void ZoomIn()
@@ -170,6 +199,7 @@ namespace Olishell
 	    }
 
 	    drawer.QueueResize();
+	    updateStatus();
 	}
 
 	void OnSizeAllocate(object sender, SizeAllocatedArgs args)
