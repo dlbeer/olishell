@@ -96,10 +96,12 @@ namespace Olishell
 	    string args = "--embed " + settings.MSPDebugArgs;
 
 	    if (settings.UseBundledDebugger)
+	    {
+		string self = Assembly.GetExecutingAssembly().Location;
+
 		path = Path.Combine
-		    (Path.GetDirectoryName
-		     (Assembly.GetAssembly(typeof(DebugManager)).CodeBase),
-		     "mspdebug.exe");
+		    (Path.GetDirectoryName(self), "mspdebug.exe");
+	    }
 
 	    isReady = false;
 	    try {
