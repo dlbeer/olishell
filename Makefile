@@ -15,7 +15,7 @@ SOURCE = \
     DebugPane.cs
 
 olishell.exe: $(SOURCE)
-	$(CSC) -pkg:gtk-sharp-2.0 -out:$@ $(SOURCE)
+	$(CSC) -target:winexe -pkg:gtk-sharp-2.0 -out:$@ $(SOURCE)
 
 clean:
 	rm -f olishell.exe
