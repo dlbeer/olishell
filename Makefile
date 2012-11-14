@@ -1,18 +1,18 @@
 CSC ?= dmcs
 BINARY = olishell.exe
 SOURCE = \
-    App.cs \
-    ConsoleLog.cs \
-    ITC.cs \
-    DebugView.cs \
-    Debugger.cs \
-    SampleQueue.cs \
-    PowerView.cs \
-    DebugManager.cs \
-    AppMenu.cs \
-    Settings.cs \
-    PreferencesDialog.cs \
-    DebugPane.cs
+    src/App.cs \
+    src/ConsoleLog.cs \
+    src/ITC.cs \
+    src/DebugView.cs \
+    src/Debugger.cs \
+    src/SampleQueue.cs \
+    src/PowerView.cs \
+    src/DebugManager.cs \
+    src/AppMenu.cs \
+    src/Settings.cs \
+    src/PreferencesDialog.cs \
+    src/DebugPane.cs
 
 olishell.exe: $(SOURCE)
 	$(CSC) -target:winexe -pkg:gtk-sharp-2.0 -out:$@ $(SOURCE)
