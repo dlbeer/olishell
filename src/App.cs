@@ -29,13 +29,14 @@ namespace Olishell
 	DebugPane debugPane;
 	Settings settings;
 
-	public App(Settings set, DebugManager mgr)
+	public App(Settings set, DebugManager mgr, string argsOverride)
 	{
 	    settings = set;
 	    debugPane = new DebugPane(set, mgr);
 
 	    AccelGroup agr = new AccelGroup();
-	    menu = new AppMenu(mgr, agr, set, mainWin, debugPane);
+	    menu = new AppMenu(mgr, agr, set, mainWin, debugPane,
+			       argsOverride);
 
 	    VBox vb = new VBox(false, 3);
 
@@ -61,6 +62,9 @@ namespace Olishell
 
 	static string joinArguments(string[] args)
 	{
+	    if (args.Length <= 0)
+		return null;
+
 	    var sb = new StringBuilder();
 
 	    foreach (string arg in args) {
@@ -114,14 +118,15 @@ namespace Olishell
 
 	    try
 	    {
+		string argsOverride = joinArguments(args);
 		Settings settings = Settings.Load();
-		DebugManager mgr = new DebugManager(settings);
+		DebugManager mgr = new DebugManager(settings, argsOverride);
 
 		if ((args.Length <= 0) || hasNonOptions(args))
-		    new App(settings, mgr);
+		    new App(settings, mgr, argsOverride);
 
 		if (args.Length > 0)
-		    mgr.Start(joinArguments(args));
+		    mgr.Start();
 
 		if ((args.Length <= 0) || hasNonOptions(args))
 		    Application.Run();

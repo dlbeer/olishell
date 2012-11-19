@@ -42,13 +42,13 @@ namespace Olishell
 
 	public AppMenu(DebugManager mgr, AccelGroup agr,
 		       Settings set, Window parent,
-		       DebugPane pane)
+		       DebugPane pane, string argsOverride)
 	{
 	    settings = set;
 	    debugPane = pane;
 	    debugManager = mgr;
 	    menuBar = new MenuBar();
-	    preferences = new PreferencesDialog(set, parent);
+	    preferences = new PreferencesDialog(set, parent, argsOverride);
 
 	    menuBar.Append(CreateFileMenu(agr));
 	    menuBar.Append(CreateEditMenu(agr));

@@ -34,9 +34,13 @@ namespace Olishell
 	Entry			sMSPDebugArgs;
 	FontButton		sConsoleFont;
 
-	public PreferencesDialog(Settings set, Window parent)
+	string			argsOverride;
+
+	public PreferencesDialog(Settings set, Window parent,
+				 string argsOver)
 	{
 	    settings = set;
+	    argsOverride = argsOver;
 
 	    dialog = new Dialog("Preferences", parent,
 		DialogFlags.Modal | DialogFlags.DestroyWithParent,
@@ -68,6 +72,7 @@ namespace Olishell
 	    lbl.SetAlignment(0.0f, 0.5f);
 	    table.Attach(lbl, 0, 1, 2, 3, AttachOptions.Fill, 0, 4, 4);
 	    sMSPDebugArgs = new Entry();
+	    sMSPDebugArgs.Sensitive = (argsOverride == null);
 	    table.Attach(sMSPDebugArgs, 1, 3, 2, 3,
 			 AttachOptions.Expand | AttachOptions.Fill,
 			 0, 4, 4);
@@ -115,6 +120,9 @@ namespace Olishell
 	    sMSPDebugArgs.Text = settings.MSPDebugArgs;
 	    sConsoleFont.SetFontName(settings.ConsoleFont);
 
+	    if (argsOverride != null)
+		sMSPDebugArgs.Text = argsOverride;
+
 	    OnBundledState(this, null);
 	}
 
@@ -122,7 +130,8 @@ namespace Olishell
 	{
 	    settings.UseBundledDebugger = sUseBundledDebugger.Active;
 	    settings.MSPDebugPath = sMSPDebugPath.Text;
-	    settings.MSPDebugArgs = sMSPDebugArgs.Text;
+	    if (argsOverride == null)
+		settings.MSPDebugArgs = sMSPDebugArgs.Text;
 	    settings.ConsoleFont = sConsoleFont.FontName;
 
 	    settings.RaiseRefreshFont();

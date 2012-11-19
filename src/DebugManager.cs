@@ -42,6 +42,7 @@ namespace Olishell
 	Debugger		debug;
 	bool			isReady = false;
 	SampleQueue		powerData;
+	string			argsOverride;
 
 	// Public events for state changes.
 	public event EventHandler DebuggerStarted;
@@ -51,9 +52,10 @@ namespace Olishell
 	public event MessageEventHandler MessageReceived;
 	public event EventHandler PowerChanged;
 
-	public DebugManager(Settings set)
+	public DebugManager(Settings set, string args = null)
 	{
 	    settings = set;
+	    argsOverride = args;
 	}
 
 	// Fetch power sample data
@@ -89,7 +91,10 @@ namespace Olishell
 	// running.
 	public void Start()
 	{
-	    Start(settings.MSPDebugArgs);
+	    if (argsOverride != null)
+		Start(argsOverride);
+	    else
+		Start(settings.MSPDebugArgs);
 	}
 
 	// Start a new debugger process if the debugger is not already
