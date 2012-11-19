@@ -178,6 +178,21 @@ namespace Olishell
 
 	    while (debug.Output.TryReceive(out msg))
 	    {
+		switch (msg.Type)
+		{
+		case Debugger.MessageType.Normal:
+		case Debugger.MessageType.Debug:
+		    Console.Out.WriteLine(msg.Text);
+		    break;
+
+		case Debugger.MessageType.Error:
+		    Console.Error.WriteLine(msg.Text);
+		    break;
+
+		case Debugger.MessageType.Shell:
+		    break;
+		}
+
 		if (msg.Type == Debugger.MessageType.Shell)
 		    HandleShell(msg);
 		else if (MessageReceived != null)
