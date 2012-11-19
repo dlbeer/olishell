@@ -17,6 +17,7 @@
 // USA
 
 using System;
+using System.Text;
 using Gtk;
 
 namespace Olishell
@@ -58,7 +59,47 @@ namespace Olishell
 	    Application.Quit();
 	}
 
-	public static void Main()
+	static string joinArguments(string[] args)
+	{
+	    var sb = new StringBuilder();
+
+	    foreach (string arg in args) {
+		if (sb.Length >= 0)
+		    sb.Append(' ');
+
+		bool needsQuoting = arg.IndexOf(' ') >= 0;
+
+		if (needsQuoting)
+		    sb.Append('"');
+
+		int bsc = 0;
+
+		foreach (char c in arg) {
+		    if (c == '\\') {
+			bsc++;
+		    } else {
+			for (int i = 0; i < bsc; i++)
+			    sb.Append('\\');
+
+			if (c == '"')
+			    sb.Append('\\');
+
+			sb.Append(c);
+			bsc = 0;
+		    }
+		}
+
+		for (int i = 0; i < bsc; i++)
+		    sb.Append('\\');
+
+		if (needsQuoting)
+		    sb.Append('"');
+	    }
+
+	    return sb.ToString();
+	}
+
+	public static void Main(string[] args)
 	{
 	    Application.Init();
 
@@ -68,6 +109,9 @@ namespace Olishell
 		DebugManager mgr = new DebugManager(settings);
 
 		new App(settings, mgr);
+
+		if (args.Length > 0)
+		    mgr.Start(joinArguments(args));
 
 		Application.Run();
 

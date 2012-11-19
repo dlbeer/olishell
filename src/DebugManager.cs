@@ -89,11 +89,18 @@ namespace Olishell
 	// running.
 	public void Start()
 	{
+	    Start(settings.MSPDebugArgs);
+	}
+
+	// Start a new debugger process if the debugger is not already
+	// running.
+	public void Start(string cmdline)
+	{
 	    if (debug != null)
 		return;
 
 	    string path = settings.MSPDebugPath;
-	    string args = "--embed " + settings.MSPDebugArgs;
+	    string args = "--embed " + cmdline;
 
 	    if (settings.UseBundledDebugger)
 	    {
