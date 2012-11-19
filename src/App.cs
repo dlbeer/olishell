@@ -99,6 +99,15 @@ namespace Olishell
 	    return sb.ToString();
 	}
 
+	static bool hasNonOptions(string[] args)
+	{
+	    foreach (string a in args)
+		if ((a.Length <= 0) || (a[0] != '-'))
+		    return true;
+
+	    return false;
+	}
+
 	public static void Main(string[] args)
 	{
 	    Application.Init();
@@ -108,12 +117,14 @@ namespace Olishell
 		Settings settings = Settings.Load();
 		DebugManager mgr = new DebugManager(settings);
 
-		new App(settings, mgr);
+		if ((args.Length <= 0) || hasNonOptions(args))
+		    new App(settings, mgr);
 
 		if (args.Length > 0)
 		    mgr.Start(joinArguments(args));
 
-		Application.Run();
+		if ((args.Length <= 0) || hasNonOptions(args))
+		    Application.Run();
 
 		// Synchronously terminate the debugger
 		mgr.Terminate();
