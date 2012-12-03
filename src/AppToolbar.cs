@@ -31,11 +31,12 @@ namespace Olishell
 	ToolButton		debuggerStop;
 	ToolButton		debuggerInterrupt;
 
-	public AppToolbar(DebugManager mgr)
+	public AppToolbar(DebugManager mgr, DebugPane debugPane)
 	{
 	    debugManager = mgr;
 	    toolBar = new Toolbar();
 
+	    // Debugger control buttons
 	    debuggerStart = new ToolButton(Stock.MediaPlay);
 	    debuggerStart.Clicked += OnDebuggerStart;
 	    debuggerStart.TooltipText = "Start debugger";
@@ -55,6 +56,30 @@ namespace Olishell
 	    debuggerStop.Sensitive = false;
 	    debuggerInterrupt.Sensitive = false;
 
+	    toolBar.Add(new SeparatorToolItem());
+
+	    // Zoom controls
+	    var zoomIn = new ToolButton(Stock.ZoomIn);
+	    zoomIn.Clicked += (obj, evt) => debugPane.PowerView.ZoomIn();
+	    zoomIn.TooltipText = "Zoom in";
+	    toolBar.Add(zoomIn);
+
+	    var zoomOut = new ToolButton(Stock.ZoomOut);
+	    zoomOut.Clicked += (obj, evt) => debugPane.PowerView.ZoomOut();
+	    zoomOut.TooltipText = "Zoom out";
+	    toolBar.Add(zoomOut);
+
+	    var zoomFit = new ToolButton(Stock.ZoomFit);
+	    zoomFit.Clicked += (obj, evt) => debugPane.PowerView.ZoomFit();
+	    zoomFit.TooltipText = "Zoom to fit";
+	    toolBar.Add(zoomFit);
+
+	    var zoomFull = new ToolButton(Stock.Zoom100);
+	    zoomFull.Clicked += (obj, evt) => debugPane.PowerView.ZoomFull();
+	    zoomFull.TooltipText = "Zoom full";
+	    toolBar.Add(zoomFull);
+
+	    // Debug manager listeners
 	    debugManager.DebuggerBusy += OnDebuggerBusy;
 	    debugManager.DebuggerReady += OnDebuggerReady;
 	    debugManager.DebuggerStarted += OnDebuggerStarted;

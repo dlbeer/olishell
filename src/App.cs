@@ -38,7 +38,7 @@ namespace Olishell
 	    AccelGroup agr = new AccelGroup();
 	    menu = new AppMenu(mgr, agr, set, mainWin, debugPane,
 			       argsOverride);
-	    toolbar = new AppToolbar(mgr);
+	    toolbar = new AppToolbar(mgr, debugPane);
 
 	    VBox vb = new VBox(false, 3);
 
