@@ -17,6 +17,7 @@
 // USA
 
 using System;
+using System.Text;
 using System.Reflection;
 using System.IO;
 using System.Xml;
@@ -187,11 +188,11 @@ namespace Olishell
 		{
 		case Debugger.MessageType.Normal:
 		case Debugger.MessageType.Debug:
-		    Console.Out.WriteLine(msg.Text);
+		    Console.Out.WriteLine(stripANSI(msg.Text));
 		    break;
 
 		case Debugger.MessageType.Error:
-		    Console.Error.WriteLine(msg.Text);
+		    Console.Error.WriteLine(stripANSI(msg.Text));
 		    break;
 
 		case Debugger.MessageType.Shell:
@@ -283,6 +284,33 @@ namespace Olishell
 
 	    if (DebuggerReady != null)
 		DebuggerReady(this, null);
+	}
+
+	// Strip ANSI codes
+	static string stripANSI(string text)
+	{
+	    var sb = new StringBuilder();
+	    int s = 0;
+
+	    while (s < text.Length) {
+		if (text[s] == 0x1b) {
+		    while (s < text.Length && text[s] != 'm')
+			s++;
+
+		    if (s < text.Length)
+			s++;
+		} else {
+		    int e = text.IndexOf((char)0x1b, s);
+
+		    if (e < 0)
+			e = text.Length;
+
+		    sb.Append(text.Substring(s, e - s));
+		    s = e;
+		}
+	    }
+
+	    return sb.ToString();
 	}
     }
 }
