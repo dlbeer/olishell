@@ -17,6 +17,7 @@
 // USA
 
 using System;
+using System.Collections.Generic;
 using Gtk;
 
 namespace Olishell
@@ -26,14 +27,18 @@ namespace Olishell
 	Toolbar			toolBar;
 
 	DebugManager		debugManager;
+	DebugPane		debugPane;
 
 	ToolButton		debuggerStart;
 	ToolButton		debuggerStop;
 	ToolButton		debuggerInterrupt;
 
-	public AppToolbar(DebugManager mgr, DebugPane debugPane)
+	List<ToolButton>	commandMacros = new List<ToolButton>();
+
+	public AppToolbar(DebugManager mgr, DebugPane dpane)
 	{
 	    debugManager = mgr;
+	    debugPane = dpane;
 	    toolBar = new Toolbar();
 
 	    // Debugger control buttons
@@ -55,6 +60,39 @@ namespace Olishell
 	    debuggerStart.Sensitive = true;
 	    debuggerStop.Sensitive = false;
 	    debuggerInterrupt.Sensitive = false;
+
+	    toolBar.Add(new SeparatorToolItem());
+
+	    // Command macros
+	    var cmdProg = new ToolButton(Stock.Open);
+	    cmdProg.Clicked += OnCommandProgram;
+	    cmdProg.TooltipText = "Program...";
+	    toolBar.Add(cmdProg);
+	    commandMacros.Add(cmdProg);
+
+	    var cmdReset = new ToolButton(Stock.Clear);
+	    cmdReset.Clicked += (obj, evt) =>
+		debugPane.DebugView.RunCommand("reset");
+	    cmdReset.TooltipText = "Reset";
+	    toolBar.Add(cmdReset);
+	    commandMacros.Add(cmdReset);
+
+	    var cmdRun = new ToolButton(Stock.GoForward);
+	    cmdRun.Clicked += (obj, evt) =>
+		debugPane.DebugView.RunCommand("run");
+	    cmdRun.TooltipText = "Run";
+	    toolBar.Add(cmdRun);
+	    commandMacros.Add(cmdRun);
+
+	    var cmdStep = new ToolButton(Stock.MediaNext);
+	    cmdStep.Clicked += (obj, evt) =>
+		debugPane.DebugView.RunCommand("step");
+	    cmdStep.TooltipText = "Step";
+	    toolBar.Add(cmdStep);
+	    commandMacros.Add(cmdStep);
+
+	    foreach (ToolButton m in commandMacros)
+		m.Sensitive = false;
 
 	    toolBar.Add(new SeparatorToolItem());
 
@@ -99,14 +137,35 @@ namespace Olishell
 	    debugManager.DebuggerExited -= OnDebuggerExited;
 	}
 
+	void OnCommandProgram(object sender, EventArgs args)
+	{
+	    FileChooserDialog dlg = new FileChooserDialog("Program file",
+		null, FileChooserAction.Open,
+		new object[]{Stock.Cancel, ResponseType.Cancel,
+			     Stock.Ok, ResponseType.Ok});
+
+	    dlg.DefaultResponse = ResponseType.Ok;
+
+	    if ((ResponseType)dlg.Run() == ResponseType.Ok)
+		debugPane.DebugView.RunCommand("prog " + dlg.Filename);
+
+	    dlg.Hide();
+	}
+
 	void OnDebuggerBusy(object sender, EventArgs args)
 	{
 	    debuggerInterrupt.Sensitive = true;
+
+	    foreach (ToolButton m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	void OnDebuggerReady(object sender, EventArgs args)
 	{
 	    debuggerInterrupt.Sensitive = false;
+
+	    foreach (ToolButton m in commandMacros)
+		m.Sensitive = true;
 	}
 
 	void OnDebuggerStarted(object sender, EventArgs args)
@@ -114,6 +173,9 @@ namespace Olishell
 	    debuggerStart.Sensitive = false;
 	    debuggerStop.Sensitive = true;
 	    debuggerInterrupt.Sensitive = true;
+
+	    foreach (ToolButton m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	void OnDebuggerExited(object sender, EventArgs args)
@@ -121,6 +183,9 @@ namespace Olishell
 	    debuggerStart.Sensitive = true;
 	    debuggerStop.Sensitive = false;
 	    debuggerInterrupt.Sensitive = false;
+
+	    foreach (ToolButton m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	void OnDebuggerStart(object sender, EventArgs args)
@@ -137,6 +202,5 @@ namespace Olishell
 	{
 	    debugManager.SendInterrupt();
 	}
-
     }
 }
