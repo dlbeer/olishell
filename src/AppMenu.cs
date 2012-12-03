@@ -19,6 +19,7 @@
 using System;
 using System.Text;
 using System.IO;
+using System.Collections.Generic;
 using Gtk;
 
 namespace Olishell
@@ -39,6 +40,9 @@ namespace Olishell
 	MenuItem		debuggerStart;
 	MenuItem		debuggerStop;
 	MenuItem		debuggerInterrupt;
+
+	// Command menu items
+	List<MenuItem>		commandMacros = new List<MenuItem>();
 
 	public AppMenu(DebugManager mgr, AccelGroup agr,
 		       Settings set, Window parent,
@@ -65,6 +69,9 @@ namespace Olishell
 
 	    debuggerStop.Sensitive = false;
 	    debuggerInterrupt.Sensitive = false;
+
+	    foreach (MenuItem m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	public Widget View
@@ -83,11 +90,17 @@ namespace Olishell
 	void OnDebuggerBusy(object sender, EventArgs args)
 	{
 	    debuggerInterrupt.Sensitive = true;
+
+	    foreach (MenuItem m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	void OnDebuggerReady(object sender, EventArgs args)
 	{
 	    debuggerInterrupt.Sensitive = false;
+
+	    foreach (MenuItem m in commandMacros)
+		m.Sensitive = true;
 	}
 
 	void OnDebuggerStarted(object sender, EventArgs args)
@@ -95,6 +108,9 @@ namespace Olishell
 	    debuggerStart.Sensitive = false;
 	    debuggerStop.Sensitive = true;
 	    debuggerInterrupt.Sensitive = true;
+
+	    foreach (MenuItem m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	void OnDebuggerExited(object sender, EventArgs args)
@@ -102,6 +118,9 @@ namespace Olishell
 	    debuggerStart.Sensitive = true;
 	    debuggerStop.Sensitive = false;
 	    debuggerInterrupt.Sensitive = false;
+
+	    foreach (MenuItem m in commandMacros)
+		m.Sensitive = false;
 	}
 
 	// Create "File" menu
@@ -315,7 +334,62 @@ namespace Olishell
 	    debuggerInterrupt.Activated += OnDebuggerInterrupt;
 	    dbgMenu.Append(debuggerInterrupt);
 
+	    dbgMenu.Append(CreateCommandsMenu(agr));
+
 	    return dbg;
+	}
+
+	// Create "Debugger/Commands" menu
+	MenuItem CreateCommandsMenu(AccelGroup agr)
+	{
+	    MenuItem cmd = new MenuItem("_Commands");
+	    Menu cmdMenu = new Menu();
+	    cmd.Submenu = cmdMenu;
+
+	    MenuItem prog = new ImageMenuItem(Stock.Open, agr);
+	    ((Label)prog.Children[0]).Text = "Program...";
+	    prog.Activated += OnCommandProgram;
+	    cmdMenu.Append(prog);
+	    commandMacros.Add(prog);
+
+	    MenuItem reset = new ImageMenuItem(Stock.Clear, agr);
+	    ((Label)reset.Children[0]).Text = "Reset";
+	    reset.Activated += (obj, evt) =>
+		debugPane.DebugView.RunCommand("reset");
+	    cmdMenu.Append(reset);
+	    commandMacros.Add(reset);
+
+	    MenuItem run = new ImageMenuItem(Stock.GoForward, agr);
+	    ((Label)run.Children[0]).Text = "Run";
+	    run.Activated += (obj, evt) =>
+		debugPane.DebugView.RunCommand("run");
+	    cmdMenu.Append(run);
+	    commandMacros.Add(run);
+
+	    MenuItem step = new ImageMenuItem(Stock.MediaNext, agr);
+	    ((Label)step.Children[0]).Text = "Step";
+	    step.Activated += (obj, evt) =>
+		debugPane.DebugView.RunCommand("step");
+	    cmdMenu.Append(step);
+	    commandMacros.Add(step);
+
+	    return cmd;
+	}
+
+	// Debugger -> Commands -> Program...
+	void OnCommandProgram(object sender, EventArgs args)
+	{
+	    FileChooserDialog dlg = new FileChooserDialog("Program file",
+		null, FileChooserAction.Open,
+		new object[]{Stock.Cancel, ResponseType.Cancel,
+			     Stock.Ok, ResponseType.Ok});
+
+	    dlg.DefaultResponse = ResponseType.Ok;
+
+	    if ((ResponseType)dlg.Run() == ResponseType.Ok)
+		debugPane.DebugView.RunCommand("prog " + dlg.Filename);
+
+	    dlg.Hide();
 	}
 
 	// Debugger -> Start

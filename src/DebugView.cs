@@ -83,12 +83,8 @@ namespace Olishell
 	    log.AddLine(args.Message.Text);
 	}
 
-	void OnCommand(object sender, EventArgs args)
+	public void RunCommand(string text)
 	{
-	    string text = command.Text;
-
-	    command.Text = "";
-
 	    int nl = text.IndexOf('\n');
 
 	    if (nl >= 0)
@@ -96,6 +92,12 @@ namespace Olishell
 
 	    log.AddLine("\x1b[1m==>\x1b[0m " + text);
 	    debugManager.SendCommand(text);
+	}
+
+	void OnCommand(object sender, EventArgs args)
+	{
+	    RunCommand(command.Text);
+	    command.Text = "";
 	}
 
 	void OnRunStop(object sender, EventArgs args)
