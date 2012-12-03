@@ -26,6 +26,7 @@ namespace Olishell
     {
 	Window mainWin = new Window("Olishell");
 	AppMenu menu;
+	AppToolbar toolbar;
 	DebugPane debugPane;
 	Settings settings;
 
@@ -37,6 +38,7 @@ namespace Olishell
 	    AccelGroup agr = new AccelGroup();
 	    menu = new AppMenu(mgr, agr, set, mainWin, debugPane,
 			       argsOverride);
+	    toolbar = new AppToolbar(mgr);
 
 	    VBox vb = new VBox(false, 3);
 
@@ -45,6 +47,7 @@ namespace Olishell
 	    mainWin.AddAccelGroup(agr);
 
 	    vb.PackStart(menu.View, false, false, 0);
+	    vb.PackStart(toolbar.View, false, false, 0);
 	    vb.PackEnd(debugPane.View, true, true, 0);
 	    mainWin.Add(vb);
 

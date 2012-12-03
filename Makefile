@@ -12,7 +12,8 @@ SOURCE = \
     src/AppMenu.cs \
     src/Settings.cs \
     src/PreferencesDialog.cs \
-    src/DebugPane.cs
+    src/DebugPane.cs \
+    src/AppToolbar.cs
 
 olishell.exe: $(SOURCE)
 	$(CSC) -pkg:gtk-sharp-2.0 -out:$@ $(SOURCE)
