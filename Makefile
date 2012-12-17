@@ -1,4 +1,4 @@
-CSC ?= dmcs
+CSC ?= gmcs
 BINARY = olishell.exe
 SOURCE = \
     src/App.cs \

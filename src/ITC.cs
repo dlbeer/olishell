@@ -19,7 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+
+#if NET40
 using System.Threading.Tasks;
+#endif
 
 // This file defines inter-thread communication primitives. These are
 // intended to make it much easier to structure asynchronous operations
@@ -344,6 +347,7 @@ namespace Olishell.ITC
 	}
     }
 
+#if NET40
     // This wrapper is a utility to produce Tasks for waiting for
     // primitives. It can either produce a blocking task, or
     // schedule an asynchronous continuation.
@@ -366,6 +370,7 @@ namespace Olishell.ITC
 	    return WaitAsync(new Primitive[]{prim}, timeoutMs);
 	}
     }
+#endif
 
     // This wrapper is another utility which produces a synchronous Gtk
     // event for a single  primitive. Its methods should be called
