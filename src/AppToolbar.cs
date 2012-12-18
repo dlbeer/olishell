@@ -44,16 +44,19 @@ namespace Olishell
 	    // Debugger control buttons
 	    debuggerStart = new ToolButton(Stock.MediaPlay);
 	    debuggerStart.Clicked += OnDebuggerStart;
+	    debuggerStart.Label = "Start";
 	    debuggerStart.TooltipText = "Start debugger";
 	    toolBar.Add(debuggerStart);
 
 	    debuggerStop = new ToolButton(Stock.MediaStop);
 	    debuggerStop.Clicked += OnDebuggerStop;
+	    debuggerStop.Label = "Stop";
 	    debuggerStop.TooltipText = "Stop debugger";
 	    toolBar.Add(debuggerStop);
 
 	    debuggerInterrupt = new ToolButton(Stock.Cancel);
 	    debuggerInterrupt.Clicked += OnDebuggerInterrupt;
+	    debuggerInterrupt.Label = "Interrupt";
 	    debuggerInterrupt.TooltipText = "Interrupt debugger";
 	    toolBar.Add(debuggerInterrupt);
 
@@ -66,6 +69,7 @@ namespace Olishell
 	    // Command macros
 	    var cmdProg = new ToolButton(Stock.Open);
 	    cmdProg.Clicked += OnCommandProgram;
+	    cmdProg.Label = "Program";
 	    cmdProg.TooltipText = "Program...";
 	    toolBar.Add(cmdProg);
 	    commandMacros.Add(cmdProg);
@@ -73,6 +77,7 @@ namespace Olishell
 	    var cmdReset = new ToolButton(Stock.Clear);
 	    cmdReset.Clicked += (obj, evt) =>
 		debugPane.DebugView.RunCommand("reset");
+	    cmdReset.Label = "Reset";
 	    cmdReset.TooltipText = "Reset";
 	    toolBar.Add(cmdReset);
 	    commandMacros.Add(cmdReset);
@@ -80,6 +85,7 @@ namespace Olishell
 	    var cmdRun = new ToolButton(Stock.GoForward);
 	    cmdRun.Clicked += (obj, evt) =>
 		debugPane.DebugView.RunCommand("run");
+	    cmdRun.Label = "Run";
 	    cmdRun.TooltipText = "Run";
 	    toolBar.Add(cmdRun);
 	    commandMacros.Add(cmdRun);
@@ -87,6 +93,7 @@ namespace Olishell
 	    var cmdStep = new ToolButton(Stock.MediaNext);
 	    cmdStep.Clicked += (obj, evt) =>
 		debugPane.DebugView.RunCommand("step");
+	    cmdStep.Label = "Step";
 	    cmdStep.TooltipText = "Step";
 	    toolBar.Add(cmdStep);
 	    commandMacros.Add(cmdStep);
@@ -99,21 +106,25 @@ namespace Olishell
 	    // Zoom controls
 	    var zoomIn = new ToolButton(Stock.ZoomIn);
 	    zoomIn.Clicked += (obj, evt) => debugPane.PowerView.ZoomIn();
+	    zoomIn.Label = "Zoom in";
 	    zoomIn.TooltipText = "Zoom in";
 	    toolBar.Add(zoomIn);
 
 	    var zoomOut = new ToolButton(Stock.ZoomOut);
 	    zoomOut.Clicked += (obj, evt) => debugPane.PowerView.ZoomOut();
+	    zoomOut.Label = "Zoom out";
 	    zoomOut.TooltipText = "Zoom out";
 	    toolBar.Add(zoomOut);
 
 	    var zoomFit = new ToolButton(Stock.ZoomFit);
 	    zoomFit.Clicked += (obj, evt) => debugPane.PowerView.ZoomFit();
+	    zoomFit.Label = "Zoom fit";
 	    zoomFit.TooltipText = "Zoom to fit";
 	    toolBar.Add(zoomFit);
 
 	    var zoomFull = new ToolButton(Stock.Zoom100);
 	    zoomFull.Clicked += (obj, evt) => debugPane.PowerView.ZoomFull();
+	    zoomFull.Label = "Zoom full";
 	    zoomFull.TooltipText = "Zoom full";
 	    toolBar.Add(zoomFull);
 
